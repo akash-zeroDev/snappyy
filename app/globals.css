@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+.developing {
+  animation: develop 3s ease-out forwards;
+}
+
+@keyframes develop {
+  0% { filter: blur(8px) brightness(2) saturate(0); }
+  30% { filter: blur(4px) brightness(1.5) saturate(0.3); }
+  60% { filter: blur(2px) brightness(1.2) saturate(0.6); }
+  100% { filter: blur(0px) brightness(1) saturate(1); }
+}
+
+video {
+  transform: scaleX(-1);
+}
+
+/* Atmospheric leaf drift — very slow, barely perceptible */
+@keyframes leaf-drift-a {
+  0%   { transform: translate(0, 0) rotate(-22deg); }
+  100% { transform: translate(8px, 14px) rotate(-18deg); }
+}
+@keyframes leaf-drift-b {
+  0%   { transform: translate(0, 0) rotate(28deg); }
+  100% { transform: translate(-10px, -12px) rotate(32deg); }
+}
+@keyframes leaf-drift-c {
+  0%   { transform: translate(0, 0) rotate(-8deg); }
+  100% { transform: translate(6px, -8px) rotate(-4deg); }
+}
+
+/* 3D rotating media ring — exact framer-3dscene structure */
+.scene3d-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.framer-3dscene,
+.framer-a3d {
+  display: grid;
+}
+.framer-3dscene {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  perspective: 50em;
+  background: transparent;
+  -webkit-mask: linear-gradient(90deg, #0000, #000 20%, #000 80%, #0000);
+  mask: linear-gradient(90deg, #0000, #000 20%, #000 80%, #0000);
+  position: relative;
+}
+.framer-3dscene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, #000 0%, #0000 20%, #0000 80%, #000 100%);
+  z-index: 2;
+}
+.framer-3dscene > * {
+  position: relative;
+  z-index: 1;
+}
+.framer-a3d-wrap {
+  place-self: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.framer-a3d {
+  transform-style: preserve-3d;
+  animation: framer-ry 28s linear infinite reverse;
+  will-change: transform;
+}
+@keyframes framer-ry { to { transform: rotateY(1turn); } }
+.framer-card {
+  grid-area: 1 / 1;
+  width: var(--w);
+  aspect-ratio: 5.5 / 9.5;
+  border-radius: 2.1em;
+  backface-visibility: hidden;
+  transform:
+    rotateY(calc(var(--i) * (1turn / var(--n))))
+    translateZ(calc(-1 * ((25em * .5 + .5em) / tan((1turn / var(--n)) * .5))));
+  overflow: hidden;
+  position: relative;
+}
+.framer-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+  filter: brightness(0.5) saturate(0.75) contrast(0.95);
+}
+.scene3d-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 45% at 50% 50%, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.78) 55%, rgba(0,0,0,0.95) 90%);
+  z-index: 3;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .framer-a3d { animation-duration: 112s; }
+}
+
+/* ============================================================
+   MOBILE RESPONSIVENESS
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 900px) {
+  .framer-a3d { animation-duration: 36s; }
+  .scene3d-fade {
+    background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.97) 90%);
+  }
+}
+
+/* Phones */
+@media (max-width: 640px) {
+  /* Hide the playful "your snaps land here" arrow on phones — navbar is too tight */
+  .navbar-hint { display: none !important; }
+
+  /* Smaller heading on mobile */
+  .hero-heading { font-size: 36px !important; line-height: 40px !important; letter-spacing: -1.2px !important; }
+  .hero-subheading { font-size: 14px !important; line-height: 22px !important; }
+
+  /* Camera ring backdrop — slow it down, less aggressive perspective so cards don't crowd */
+  .framer-3dscene { perspective: 36em !important; }
+
+  /* Fridge page — shorter board, padding tightens */
+  .fridge-board { height: 520px !important; }
+  .fridge-section { padding-left: 14px !important; padding-right: 14px !important; padding-top: 36px !important; }
+  .fridge-heading { font-size: 32px !important; line-height: 36px !important; letter-spacing: -1.2px !important; }
+
+  /* Fridge memory cards — narrower so multiple fit */
+  .fridge-card { width: 150px !important; }
+
+  /* Modals — full-width with side padding */
+  .fridge-modal-inner { width: min(95vw, 480px) !important; }
+
+  /* Nav */
+  .navbar-root { padding: 12px 16px !important; }
+  .navbar-brand { font-size: 14px !important; }
+  .navbar-cta { font-size: 12px !important; padding: 6px 12px !important; }
+
+  /* Result stage buttons stack vertically */
+  .result-actions { flex-direction: column !important; width: 100%; max-width: 280px; }
+  .result-actions > * { width: 100%; }
+
+  /* Polaroid card on result stage — fit screen better */
+  .result-polaroid { width: min(86vw, 320px) !important; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .hero-heading { font-size: 32px !important; line-height: 36px !important; }
+  .fridge-heading { font-size: 28px !important; line-height: 32px !important; }
+  .fridge-card { width: 130px !important; }
+}
+
+
