@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import PaperBackground, { PAPER_PRESETS, type PaperType, type TextureStyle } from "../PaperBackground";
 import ProfileCard from "../ProfileCard";
@@ -87,8 +88,10 @@ const STYLE_TEMPLATES: Array<{ label: string; preset: Omit<CustomFridge, "name">
 ];
 
 export default function FridgePage() {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [memories, setMemories] = useState<FridgeMemory[]>([]);
   const [open, setOpen] = useState<FridgeMemory | null>(null);
   const [modalCaption, setModalCaption] = useState("");
@@ -297,6 +300,29 @@ export default function FridgePage() {
       link.click();
     };
     img.src = m.image;
+  };
+
+  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      const boardW = containerRef.current?.clientWidth ?? 1200;
+      const memory: FridgeMemory = {
+        id: `${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        image: dataUrl,
+        date: new Date().toISOString(),
+        x: 20 + Math.random() * Math.max(0, boardW - CARD_W - 40),
+        y: 20 + Math.random() * Math.max(0, BOARD_HEIGHT - 320),
+        rotate: (Math.random() - 0.5) * 14,
+        fridge: preset,
+      };
+      await putMemory(memory);
+      setMemories((prev) => [...prev, memory]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const shuffleCards = useCallback(() => {
@@ -645,6 +671,57 @@ export default function FridgePage() {
             >
               + Add note
             </button>
+            <button
+              onClick={() => galleryInputRef.current?.click()}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 999,
+                fontSize: 13,
+                cursor: "pointer",
+                background: "transparent",
+                color: "rgba(255,255,255,0.85)",
+                border: "1px dashed rgba(255,255,255,0.32)",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+              Upload photo
+            </button>
+            <Link
+              href="/"
+              style={{
+                padding: "8px 14px",
+                borderRadius: 999,
+                fontSize: 13,
+                cursor: "pointer",
+                background: "rgba(255,255,255,0.12)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.25)",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+              Take a snap
+            </Link>
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleGalleryUpload}
+              style={{ display: "none" }}
+            />
           </div>
 
           {/* Memory board */}
