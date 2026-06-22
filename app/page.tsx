@@ -89,11 +89,11 @@ function resolveFrameColor(key: string) {
 }
 
 const FRAME_SIZES = [
-  { key: "auto", label: "Auto", ratio: "auto", bottomPad: "1%", canvasBottom: 0.16 },
-  { key: "compact", label: "Compact", ratio: "27 / 22", bottomPad: "1%", canvasBottom: 0.14 },
-  { key: "classic", label: "Classic", ratio: "27 / 24", bottomPad: "1%", canvasBottom: 0.18 },
-  { key: "wide", label: "Wide", ratio: "30 / 22", bottomPad: "1%", canvasBottom: 0.14 },
-  { key: "square", label: "Square", ratio: "1 / 1", bottomPad: "1%", canvasBottom: 0.15 },
+  { key: "auto", label: "Auto", imgRatio: "auto", bottomPct: 18, canvasBottom: 0.16 },
+  { key: "compact", label: "Compact", imgRatio: "4 / 3", bottomPct: 12, canvasBottom: 0.12 },
+  { key: "classic", label: "Classic", imgRatio: "4 / 3", bottomPct: 22, canvasBottom: 0.20 },
+  { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 14, canvasBottom: 0.14 },
+  { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 18, canvasBottom: 0.16 },
 ];
 
 const SCENE_IMGS = [
@@ -445,9 +445,12 @@ export default function Home() {
     const img = new Image();
     img.onload = () => {
       const isAuto = frameSize === "auto";
+      const fsCfg = FRAME_SIZES.find(f => f.key === frameSize);
+      const imgRatioStr = fsCfg?.imgRatio ?? "4 / 3";
+      const [rw, rh] = imgRatioStr.split("/").map(Number);
       const imgH = isAuto
         ? Math.round(imgW / (img.width / img.height))
-        : Math.round(imgW * (3760 / 5640));
+        : Math.round(imgW * (rh / rw));
       const cardH = topPad + imgH + bottomPad;
       canvas.width = cardW;
       canvas.height = cardH;
@@ -1604,12 +1607,11 @@ export default function Home() {
               whileDrag={{ scale: 1.05, cursor: "grabbing", rotate: 0 }}
               style={{
                 width: "clamp(320px, 50vw, 440px)",
-                aspectRatio: frameSize === "auto" ? undefined : (FRAME_SIZES.find(f => f.key === frameSize)?.ratio ?? "27 / 24"),
                 backgroundColor: resolveFrameColor(frameColor).color,
                 borderRadius: "4px",
                 boxShadow:
                   "rgba(0, 0, 0, 0.28) 0px 20px 45px 0px, rgba(0, 0, 0, 0.12) 0px 4px 10px 0px, inset 0 0 0 1px rgba(0, 0, 0, 0.04)",
-                padding: `1.5% 1.5% ${FRAME_SIZES.find(f => f.key === frameSize)?.bottomPad ?? "1%"} 1.5%`,
+                padding: `4% 4% ${FRAME_SIZES.find(f => f.key === frameSize)?.bottomPct ?? 18}% 4%`,
                 cursor: captionEditing ? "default" : "grab",
                 display: "flex",
                 flexDirection: "column",
@@ -1628,7 +1630,7 @@ export default function Home() {
                   backgroundColor: "rgb(8, 8, 10)",
                   borderRadius: "1px",
                   width: "100%",
-                  aspectRatio: frameSize === "auto" ? undefined : "5640 / 3760",
+                  aspectRatio: frameSize === "auto" ? undefined : (FRAME_SIZES.find(f => f.key === frameSize)?.imgRatio ?? "4 / 3"),
                   overflow: "hidden",
                 }}
               >

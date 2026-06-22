@@ -14,8 +14,10 @@ import {
   type FridgeMemory,
 } from "../fridgeDB";
 
-const BOARD_HEIGHT = 1100;
-const CARD_W = 280;
+const BOARD_HEIGHT_DESKTOP = 1100;
+const BOARD_HEIGHT_MOBILE = 700;
+const CARD_W_DESKTOP = 280;
+const CARD_W_MOBILE = 180;
 
 const FONT_OPTIONS = [
   { key: "patrick", label: "Handwriting", css: "var(--font-patrick-hand), 'Patrick Hand', cursive", canvas: "Patrick Hand" },
@@ -59,11 +61,11 @@ function resolveFrameColor(key: string) {
 }
 
 const FRAME_SIZES = [
-  { key: "auto", label: "Auto", ratio: "auto", canvasBottom: 0.16 },
-  { key: "compact", label: "Compact", ratio: "27 / 22", canvasBottom: 0.14 },
-  { key: "classic", label: "Classic", ratio: "27 / 24", canvasBottom: 0.18 },
-  { key: "wide", label: "Wide", ratio: "30 / 22", canvasBottom: 0.14 },
-  { key: "square", label: "Square", ratio: "1 / 1", canvasBottom: 0.15 },
+  { key: "auto", label: "Auto", imgRatio: "auto", bottomPct: 18, canvasBottom: 0.16 },
+  { key: "compact", label: "Compact", imgRatio: "4 / 3", bottomPct: 12, canvasBottom: 0.12 },
+  { key: "classic", label: "Classic", imgRatio: "4 / 3", bottomPct: 22, canvasBottom: 0.20 },
+  { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 14, canvasBottom: 0.14 },
+  { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 18, canvasBottom: 0.16 },
 ];
 
 type CustomFridge = {
@@ -87,8 +89,22 @@ const STYLE_TEMPLATES: Array<{ label: string; preset: Omit<CustomFridge, "name">
   { label: "Pastel", preset: { paperType: "dotted", textureStyle: "smooth", background: "#e8efff", lineColor: "#a8b3cf", textureIntensity: 18 } },
 ];
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return mobile;
+}
+
 export default function FridgePage() {
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const CARD_W = isMobile ? CARD_W_MOBILE : CARD_W_DESKTOP;
+  const BOARD_HEIGHT = isMobile ? BOARD_HEIGHT_MOBILE : BOARD_HEIGHT_DESKTOP;
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -257,11 +273,13 @@ export default function FridgePage() {
     const fColor = fc.color;
     const fText = fc.text;
     const isAuto = !m.frameSize || m.frameSize === "auto";
+    const imgRatioStr = frameSizeCfg?.imgRatio ?? "4 / 3";
+    const [rw, rh] = imgRatioStr.split("/").map(Number);
     const img = new Image();
     img.onload = () => {
       const imgH = isAuto
         ? Math.round(imgW / (img.width / img.height))
-        : Math.round(imgW * (3760 / 5640));
+        : Math.round(imgW * (rh / rw));
       const cardH = topPad + imgH + bottomPad;
       canvas.width = cardW;
       canvas.height = cardH;
@@ -433,13 +451,13 @@ export default function FridgePage() {
         >
           MemoryPrint
         </Link>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center" }}>
           <button
             onClick={() => setShowFeedback(true)}
             style={{
               color: "rgba(255,255,255,0.55)",
-              fontSize: 13,
-              padding: "7px 14px",
+              fontSize: isMobile ? 11 : 13,
+              padding: isMobile ? "5px 10px" : "7px 14px",
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 999,
               background: "transparent",
@@ -453,19 +471,19 @@ export default function FridgePage() {
             className="navbar-cta"
             style={{
               color: "rgba(255,255,255,0.78)",
-              fontSize: 14,
-              padding: "8px 16px",
+              fontSize: isMobile ? 12 : 14,
+              padding: isMobile ? "6px 12px" : "8px 16px",
               border: "1px solid rgba(255,255,255,0.18)",
               borderRadius: 999,
               textDecoration: "none",
             }}
           >
-            ← Back to camera
+            {isMobile ? "← Camera" : "← Back to camera"}
           </Link>
         </div>
       </nav>
 
-      <section className="fridge-section" style={{ padding: "60px 24px 32px" }}>
+      <section className="fridge-section" style={{ padding: isMobile ? "56px 10px 24px" : "60px 24px 32px" }}>
         <div style={{ maxWidth: 1500, margin: "0 auto" }}>
           <div
             className="fridge-hero"
@@ -473,12 +491,12 @@ export default function FridgePage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 36,
-              marginBottom: 32,
+              gap: isMobile ? 16 : 36,
+              marginBottom: isMobile ? 16 : 32,
               flexWrap: "wrap",
             }}
           >
-            <ProfileCard />
+            {!isMobile && <ProfileCard />}
             <div style={{ textAlign: "center", flex: "1 1 auto", minWidth: 200 }}>
               <h1
                 className="fridge-heading"
@@ -502,13 +520,13 @@ export default function FridgePage() {
               >
                 Moments worth keeping.
               </p>
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14 }}>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: isMobile ? 10 : 14 }}>
                 <button
                   onClick={() => setShowShowcase((p) => !p)}
                   style={{
-                    padding: "7px 16px",
+                    padding: isMobile ? "5px 12px" : "7px 16px",
                     borderRadius: 999,
-                    fontSize: 12,
+                    fontSize: isMobile ? 11 : 12,
                     cursor: "pointer",
                     background: showShowcase ? "#fff" : "transparent",
                     color: showShowcase ? "#0a0a0a" : "rgba(255,255,255,0.65)",
@@ -521,9 +539,9 @@ export default function FridgePage() {
                 <button
                   onClick={shuffleCards}
                   style={{
-                    padding: "7px 16px",
+                    padding: isMobile ? "5px 12px" : "7px 16px",
                     borderRadius: 999,
-                    fontSize: 12,
+                    fontSize: isMobile ? 11 : 12,
                     cursor: "pointer",
                     background: "transparent",
                     color: "rgba(255,255,255,0.65)",
@@ -594,9 +612,9 @@ export default function FridgePage() {
             style={{
               display: "flex",
               flexWrap: "wrap",
-              gap: 8,
+              gap: isMobile ? 5 : 8,
               justifyContent: "center",
-              marginBottom: 28,
+              marginBottom: isMobile ? 16 : 28,
             }}
           >
             {ALL_FRIDGES.map((p, i) => {
@@ -607,9 +625,9 @@ export default function FridgePage() {
                   <button
                     onClick={() => setPreset(i)}
                     style={{
-                      padding: "8px 14px",
+                      padding: isMobile ? "6px 10px" : "8px 14px",
                       borderRadius: 999,
-                      fontSize: 13,
+                      fontSize: isMobile ? 11 : 13,
                       cursor: "pointer",
                       background: isActive ? "#fff" : "transparent",
                       color: isActive ? "#0a0a0a" : "rgba(255,255,255,0.75)",
@@ -646,9 +664,9 @@ export default function FridgePage() {
             <button
               onClick={() => setShowAddFridge(true)}
               style={{
-                padding: "8px 14px",
+                padding: isMobile ? "6px 10px" : "8px 14px",
                 borderRadius: 999,
-                fontSize: 13,
+                fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
                 color: "rgba(255,255,255,0.85)",
@@ -660,9 +678,9 @@ export default function FridgePage() {
             <button
               onClick={() => setShowAddNote(true)}
               style={{
-                padding: "8px 14px",
+                padding: isMobile ? "6px 10px" : "8px 14px",
                 borderRadius: 999,
-                fontSize: 13,
+                fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
                 color: "rgba(255,255,255,0.85)",
@@ -674,19 +692,19 @@ export default function FridgePage() {
             <button
               onClick={() => galleryInputRef.current?.click()}
               style={{
-                padding: "8px 14px",
+                padding: isMobile ? "6px 10px" : "8px 14px",
                 borderRadius: 999,
-                fontSize: 13,
+                fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
                 color: "rgba(255,255,255,0.85)",
                 border: "1px dashed rgba(255,255,255,0.32)",
                 display: "flex",
                 alignItems: "center",
-                gap: 5,
+                gap: 4,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width={isMobile ? 12 : 14} height={isMobile ? 12 : 14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                 <circle cx="9" cy="9" r="2" />
                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
@@ -696,9 +714,9 @@ export default function FridgePage() {
             <Link
               href="/"
               style={{
-                padding: "8px 14px",
+                padding: isMobile ? "6px 10px" : "8px 14px",
                 borderRadius: 999,
-                fontSize: 13,
+                fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "rgba(255,255,255,0.12)",
                 color: "#fff",
@@ -706,10 +724,10 @@ export default function FridgePage() {
                 textDecoration: "none",
                 display: "flex",
                 alignItems: "center",
-                gap: 5,
+                gap: 4,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width={isMobile ? 12 : 14} height={isMobile ? 12 : 14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
                 <circle cx="12" cy="13" r="3" />
               </svg>
@@ -729,7 +747,7 @@ export default function FridgePage() {
             {...(ALL_FRIDGES[preset]?.props ?? PAPER_PRESETS[0].props)}
             shadow
             style={{
-              borderRadius: 14,
+              borderRadius: isMobile ? 8 : 14,
               border: "1px solid rgba(0,0,0,0.18)",
               minHeight: BOARD_HEIGHT,
               position: "relative",
@@ -774,8 +792,8 @@ export default function FridgePage() {
                 const cardFontPx = Math.round((savedSize?.px ?? 14) * (CARD_W / 440));
                 const fsKey = m.frameSize || "auto";
                 const fsCfg = FRAME_SIZES.find(f => f.key === fsKey);
-                const cardRatio = fsKey === "auto" ? undefined : fsCfg?.ratio;
-                const imgRatio = fsKey === "auto" ? undefined : "5640 / 3760";
+                const imgRatio = fsKey === "auto" ? undefined : fsCfg?.imgRatio;
+                const bottomPct = fsCfg?.bottomPct ?? 18;
                 return (
                 <motion.div
                   key={m.id}
@@ -886,11 +904,10 @@ export default function FridgePage() {
                     style={{
                       background: frameBg,
                       borderRadius: 4,
-                      padding: "6% 6% 18% 6%",
+                      padding: `4% 4% ${bottomPct}% 4%`,
                       boxShadow:
                         "0 12px 24px rgba(0,0,0,0.45), 0 3px 6px rgba(0,0,0,0.35)",
                       position: "relative",
-                      aspectRatio: cardRatio,
                     }}
                   >
                     <div
@@ -990,7 +1007,9 @@ export default function FridgePage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: 24,
+              padding: isMobile ? 12 : 24,
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             <motion.div
@@ -1004,7 +1023,9 @@ export default function FridgePage() {
                 background: open.type === "note" ? (open.noteColor || "#fff9c4") : (resolveFrameColor(modalFrameColor).color),
                 borderRadius: 6,
                 padding: open.type === "note" ? "24px 20px 16px" : "3% 3% 10% 3%",
-                width: open.type === "note" ? "min(440px, 90vw)" : "min(380px, 85vw)",
+                width: open.type === "note" ? "min(440px, 92vw)" : "min(380px, 92vw)",
+                maxHeight: "90vh",
+                overflowY: "auto",
                 boxShadow: "0 30px 80px rgba(0,0,0,0.55)",
                 position: "relative",
               }}
@@ -1075,7 +1096,7 @@ export default function FridgePage() {
                 <img
                   src={open.image}
                   alt=""
-                  style={{ width: "100%", maxHeight: "35vh", objectFit: "contain", display: "block", margin: "0 auto" }}
+                  style={{ width: "100%", maxHeight: isMobile ? "28vh" : "35vh", objectFit: "contain", display: "block", margin: "0 auto" }}
                 />
 
                 {/* Legacy: old positioned texts */}
