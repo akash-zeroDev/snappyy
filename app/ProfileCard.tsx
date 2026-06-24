@@ -59,6 +59,7 @@ export default function ProfileCard() {
           width: "100%",
           height: "100%",
           transformStyle: "preserve-3d",
+          WebkitTransformStyle: "preserve-3d",
           transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
@@ -70,6 +71,7 @@ export default function ProfileCard() {
             inset: 0,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
+            zIndex: flipped ? 0 : 1,
             background: "rgb(252, 251, 248)",
             borderRadius: 6,
             padding: "6% 6% 14% 6%",
@@ -147,6 +149,7 @@ export default function ProfileCard() {
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
+            zIndex: flipped ? 1 : 0,
             background: "rgb(252, 251, 248)",
             borderRadius: 6,
             padding: "16px 14px",

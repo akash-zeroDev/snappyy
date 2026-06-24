@@ -102,7 +102,7 @@ video {
   grid-area: 1 / 1;
   width: var(--w);
   aspect-ratio: 5.5 / 9.5;
-  border-radius: 2.1em;
+  border-radius: 4px;
   backface-visibility: hidden;
   transform:
     rotateY(calc(var(--i) * (1turn / var(--n))))

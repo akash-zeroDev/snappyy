@@ -89,11 +89,11 @@ function resolveFrameColor(key: string) {
 }
 
 const FRAME_SIZES = [
-  { key: "auto", label: "Auto", imgRatio: "auto", bottomPct: 18, canvasBottom: 0.16 },
-  { key: "compact", label: "Compact", imgRatio: "4 / 3", bottomPct: 12, canvasBottom: 0.12 },
-  { key: "classic", label: "Classic", imgRatio: "4 / 3", bottomPct: 22, canvasBottom: 0.20 },
-  { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 14, canvasBottom: 0.14 },
-  { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 18, canvasBottom: 0.16 },
+  { key: "auto", label: "Auto", imgRatio: "auto", canvasBottom: 0.12 },
+  { key: "compact", label: "Compact", imgRatio: "4 / 3", canvasBottom: 0.08 },
+  { key: "classic", label: "Classic", imgRatio: "3 / 4", canvasBottom: 0.15 },
+  { key: "wide", label: "Wide", imgRatio: "16 / 9", canvasBottom: 0.10 },
+  { key: "square", label: "Square", imgRatio: "1 / 1", canvasBottom: 0.12 },
 ];
 
 const SCENE_IMGS = [
@@ -116,6 +116,12 @@ export default function Home() {
   const [flying, setFlying] = useState(false);
   const [ringBright, setRingBright] = useState(50);
   const [lightMode, setLightMode] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("oh_snap_theme");
+      if (saved === "light") setLightMode(true);
+    } catch {}
+  }, []);
   const [ringImages, setRingImages] = useState<string[]>(SCENE_IMGS);
   const [isCustomRing, setIsCustomRing] = useState(false);
   const [boothMode, setBoothMode] = useState(0);
@@ -490,6 +496,13 @@ export default function Home() {
       const dateY = topPad + imgH + bottomPad * (caption.trim() ? 0.78 : 0.5);
       ctx.fillText(today, cardW / 2, dateY);
       ctx.restore();
+      ctx.save();
+      ctx.font = "32px 'Patrick Hand', cursive";
+      ctx.fillStyle = resolved.text === "#eee" ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("MemoryPrint", cardW - sidePad, cardH - 16);
+      ctx.restore();
       const link = document.createElement("a");
       link.download = `memoryprint-${Date.now()}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -552,7 +565,7 @@ export default function Home() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
-            onClick={() => setLightMode((p) => !p)}
+            onClick={() => setLightMode((p) => { localStorage.setItem("oh_snap_theme", !p ? "light" : "dark"); return !p; })}
             aria-label="Toggle theme"
             style={{
               background: lightMode ? "rgba(0,0,0,0.06)" : "transparent",
@@ -1122,6 +1135,7 @@ export default function Home() {
                 </button>
               </div>
 
+
             </div>
           </motion.div>
         )}
@@ -1136,7 +1150,7 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="relative w-full max-w-lg aspect-square rounded-xl overflow-hidden bg-[#08080a] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+            <div className="relative w-full max-w-lg aspect-square rounded-xl overflow-hidden" style={{ background: lightMode ? "#e8e2db" : "#08080a", border: lightMode ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(255,255,255,0.1)", boxShadow: lightMode ? "0 20px 60px rgba(0,0,0,0.12)" : "0 20px 60px rgba(0,0,0,0.6)" }}>
               {cameraError ? (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-6 text-center">
                   <p style={{ fontFamily: "var(--font-patrick-hand)", fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>
@@ -1168,10 +1182,10 @@ export default function Home() {
               )}
               {/* Viewfinder corners */}
               <div className="absolute inset-4 pointer-events-none">
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/40 rounded-tl" />
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/40 rounded-tr" />
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/40 rounded-bl" />
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/40 rounded-br" />
+                <div className="absolute top-0 left-0 w-6 h-6 rounded-tl" style={{ borderTop: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}`, borderLeft: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}` }} />
+                <div className="absolute top-0 right-0 w-6 h-6 rounded-tr" style={{ borderTop: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}`, borderRight: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}` }} />
+                <div className="absolute bottom-0 left-0 w-6 h-6 rounded-bl" style={{ borderBottom: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}`, borderLeft: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}` }} />
+                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-br" style={{ borderBottom: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}`, borderRight: `2px solid ${lightMode ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"}` }} />
               </div>
             </div>
 
@@ -1217,9 +1231,15 @@ export default function Home() {
                     padding: "5px 12px",
                     borderRadius: 999,
                     fontSize: 12,
-                    border: boothMode === n ? "1.5px solid rgba(255,255,255,0.6)" : "1px solid rgba(255,255,255,0.15)",
-                    background: boothMode === n ? "rgba(255,255,255,0.15)" : "transparent",
-                    color: boothMode === n ? "#fff" : "rgba(255,255,255,0.5)",
+                    border: boothMode === n
+                      ? (lightMode ? "1.5px solid rgba(0,0,0,0.5)" : "1.5px solid rgba(255,255,255,0.6)")
+                      : (lightMode ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(255,255,255,0.15)"),
+                    background: boothMode === n
+                      ? (lightMode ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.15)")
+                      : "transparent",
+                    color: boothMode === n
+                      ? (lightMode ? "#1a1a1a" : "#fff")
+                      : (lightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)"),
                     cursor: boothCapturing ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                   }}
@@ -1234,7 +1254,13 @@ export default function Home() {
                 onClick={() =>
                   setFacingMode((m) => (m === "user" ? "environment" : "user"))
                 }
-                className="px-4 py-2 rounded-full text-sm text-white/60 border border-white/10 hover:border-white/30 transition cursor-pointer"
+                style={{
+                  padding: "8px 16px", borderRadius: 999, fontSize: 14,
+                  color: lightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent", cursor: boothCapturing ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                }}
                 disabled={boothCapturing}
               >
                 Flip
@@ -1248,9 +1274,14 @@ export default function Home() {
                     handleCapture();
                   }
                 }}
-                className="w-16 h-16 rounded-full bg-white border-4 border-white/30 shadow-lg cursor-pointer"
+                style={{
+                  width: 64, height: 64, borderRadius: "50%",
+                  background: lightMode ? "#1a1a1a" : "#fff",
+                  border: lightMode ? "4px solid rgba(0,0,0,0.2)" : "4px solid rgba(255,255,255,0.3)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                  cursor: "pointer", opacity: boothCapturing ? 0.4 : 1,
+                }}
                 whileTap={{ scale: 0.85 }}
-                style={{ opacity: boothCapturing ? 0.4 : 1 }}
               />
               <button
                 onClick={() => {
@@ -1260,7 +1291,13 @@ export default function Home() {
                   setBoothPhotos([]);
                   setStage("landing");
                 }}
-                className="px-4 py-2 rounded-full text-sm text-white/60 border border-white/10 hover:border-white/30 transition cursor-pointer"
+                style={{
+                  padding: "8px 16px", borderRadius: 999, fontSize: 14,
+                  color: lightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent", cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
               >
                 Cancel
               </button>
@@ -1311,7 +1348,7 @@ export default function Home() {
                 </p>
               </div>
             ) : (
-              <div className="w-[85vw] max-w-[420px] rounded-xl overflow-hidden border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+              <div className="w-[85vw] max-w-[420px] rounded-xl overflow-hidden" style={{ border: lightMode ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={capturedImage!}
@@ -1324,7 +1361,12 @@ export default function Home() {
             <div className="flex gap-4">
               <button
                 onClick={handleRetake}
-                className="px-6 py-3 rounded-full text-sm text-white/70 border border-white/15 hover:border-white/30 transition cursor-pointer"
+                style={{
+                  padding: "12px 24px", borderRadius: 999, fontSize: 14,
+                  color: lightMode ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.7)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(255,255,255,0.15)",
+                  background: "transparent", cursor: "pointer", transition: "all 0.2s",
+                }}
               >
                 Retake
               </button>
@@ -1332,13 +1374,14 @@ export default function Home() {
                 onClick={handleContinue}
                 className="cursor-pointer"
                 style={{
-                  backgroundColor: "rgb(255, 255, 255)",
+                  backgroundColor: lightMode ? "#1a1a1a" : "rgb(255, 255, 255)",
                   borderRadius: "100px",
-                  boxShadow:
-                    "rgb(176, 176, 176) 0px 5px 0px 0px, rgba(0, 0, 0, 0.28) 0px 8px 14px 0px",
+                  boxShadow: lightMode
+                    ? "rgba(0,0,0,0.2) 0px 5px 0px 0px, rgba(0,0,0,0.15) 0px 8px 14px 0px"
+                    : "rgb(176, 176, 176) 0px 5px 0px 0px, rgba(0, 0, 0, 0.28) 0px 8px 14px 0px",
                   border: "none",
                   padding: "12px 28px",
-                  color: "#000",
+                  color: lightMode ? "#fff" : "#000",
                   fontSize: "15px",
                   fontWeight: 500,
                 }}
@@ -1611,7 +1654,7 @@ export default function Home() {
                 borderRadius: "4px",
                 boxShadow:
                   "rgba(0, 0, 0, 0.28) 0px 20px 45px 0px, rgba(0, 0, 0, 0.12) 0px 4px 10px 0px, inset 0 0 0 1px rgba(0, 0, 0, 0.04)",
-                padding: `4% 4% ${FRAME_SIZES.find(f => f.key === frameSize)?.bottomPct ?? 18}% 4%`,
+                padding: "1.5% 1.5% 0 1.5%",
                 cursor: captionEditing ? "default" : "grab",
                 display: "flex",
                 flexDirection: "column",
@@ -1632,6 +1675,7 @@ export default function Home() {
                   width: "100%",
                   aspectRatio: frameSize === "auto" ? undefined : (FRAME_SIZES.find(f => f.key === frameSize)?.imgRatio ?? "4 / 3"),
                   overflow: "hidden",
+                  position: "relative",
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1643,6 +1687,8 @@ export default function Home() {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                    position: frameSize === "auto" ? "static" as const : "absolute" as const,
+                    inset: 0,
                   }}
                 />
               </div>
@@ -1724,12 +1770,12 @@ export default function Home() {
               flexDirection: "column",
               gap: 8,
               alignItems: "center",
-              background: "rgba(255,255,255,0.06)",
+              background: lightMode ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)",
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
               borderRadius: 14,
               padding: "10px 14px",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: lightMode ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.08)",
             }}>
               {/* Frame colors */}
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
@@ -1744,11 +1790,11 @@ export default function Home() {
                       borderRadius: 6,
                       backgroundColor: f.color,
                       border: frameColor === f.key
-                        ? "2.5px solid rgba(255,255,255,0.9)"
-                        : `1.5px solid ${f.key === "classic" ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.15)"}`,
+                        ? (lightMode ? "2.5px solid rgba(0,0,0,0.6)" : "2.5px solid rgba(255,255,255,0.9)")
+                        : `1.5px solid ${lightMode ? "rgba(0,0,0,0.15)" : (f.key === "classic" ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.15)")}`,
                       cursor: "pointer",
                       transition: "all 150ms ease",
-                      boxShadow: frameColor === f.key ? "0 0 8px rgba(255,255,255,0.3)" : "inset 0 0 0 1px rgba(0,0,0,0.05)",
+                      boxShadow: frameColor === f.key ? (lightMode ? "0 0 8px rgba(0,0,0,0.15)" : "0 0 8px rgba(255,255,255,0.3)") : "inset 0 0 0 1px rgba(0,0,0,0.05)",
                     }}
                   />
                 ))}
@@ -1762,12 +1808,12 @@ export default function Home() {
                     position: "relative",
                     overflow: "hidden",
                     border: !FRAME_COLORS.some(f => f.key === frameColor)
-                      ? "2.5px solid rgba(255,255,255,0.9)"
-                      : "1.5px solid rgba(255,255,255,0.25)",
+                      ? (lightMode ? "2.5px solid rgba(0,0,0,0.6)" : "2.5px solid rgba(255,255,255,0.9)")
+                      : (lightMode ? "1.5px solid rgba(0,0,0,0.15)" : "1.5px solid rgba(255,255,255,0.25)"),
                     background: !FRAME_COLORS.some(f => f.key === frameColor)
                       ? resolveFrameColor(frameColor).color
                       : "conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
-                    boxShadow: !FRAME_COLORS.some(f => f.key === frameColor) ? "0 0 8px rgba(255,255,255,0.3)" : "none",
+                    boxShadow: !FRAME_COLORS.some(f => f.key === frameColor) ? (lightMode ? "0 0 8px rgba(0,0,0,0.15)" : "0 0 8px rgba(255,255,255,0.3)") : "none",
                     transition: "all 150ms ease",
                     display: "flex",
                     alignItems: "center",
@@ -1802,9 +1848,15 @@ export default function Home() {
                       fontSize: 12,
                       padding: "4px 10px",
                       borderRadius: 16,
-                      border: frameSize === f.key ? "1.5px solid rgba(255,255,255,0.8)" : "1px solid rgba(255,255,255,0.12)",
-                      background: frameSize === f.key ? "rgba(255,255,255,0.12)" : "transparent",
-                      color: frameSize === f.key ? "#fff" : "rgba(255,255,255,0.45)",
+                      border: frameSize === f.key
+                        ? (lightMode ? "1.5px solid rgba(0,0,0,0.5)" : "1.5px solid rgba(255,255,255,0.8)")
+                        : (lightMode ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.12)"),
+                      background: frameSize === f.key
+                        ? (lightMode ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)")
+                        : "transparent",
+                      color: frameSize === f.key
+                        ? (lightMode ? "#1a1a1a" : "#fff")
+                        : (lightMode ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)"),
                       cursor: "pointer",
                       transition: "all 150ms ease",
                     }}
@@ -1825,17 +1877,19 @@ export default function Home() {
                   flexDirection: "column",
                   gap: 10,
                   alignItems: "center",
-                  background: "rgba(255,255,255,0.08)",
+                  background: lightMode ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.08)",
                   backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
                   borderRadius: 16,
                   padding: "12px 16px",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 {/* Colors */}
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  {["#333", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].map((c) => (
+                  {["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].map((c) => {
+                    const isPreset = ["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor);
+                    return (
                     <button
                       key={c}
                       onClick={() => setCaptionColor(c)}
@@ -1844,13 +1898,57 @@ export default function Home() {
                         height: captionColor === c ? 24 : 18,
                         borderRadius: "50%",
                         backgroundColor: c,
-                        border: captionColor === c ? "2.5px solid rgba(255,255,255,0.9)" : "2px solid rgba(255,255,255,0.25)",
+                        border: captionColor === c
+                          ? (lightMode ? "2.5px solid rgba(0,0,0,0.5)" : "2.5px solid rgba(255,255,255,0.9)")
+                          : (lightMode ? "2px solid rgba(0,0,0,0.12)" : "2px solid rgba(255,255,255,0.25)"),
                         cursor: "pointer",
                         transition: "all 150ms ease",
-                        boxShadow: captionColor === c ? "0 0 6px rgba(255,255,255,0.3)" : "none",
+                        boxShadow: captionColor === c ? (lightMode ? "0 0 6px rgba(0,0,0,0.15)" : "0 0 6px rgba(255,255,255,0.3)") : "none",
                       }}
                     />
-                  ))}
+                    );
+                  })}
+                  <label
+                    title="Pick any text color"
+                    style={{
+                      width: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor) ? 24 : 18,
+                      height: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor) ? 24 : 18,
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      position: "relative",
+                      overflow: "hidden",
+                      border: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor)
+                        ? (lightMode ? "2.5px solid rgba(0,0,0,0.5)" : "2.5px solid rgba(255,255,255,0.9)")
+                        : (lightMode ? "2px solid rgba(0,0,0,0.12)" : "2px solid rgba(255,255,255,0.25)"),
+                      background: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor)
+                        ? captionColor
+                        : "conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
+                      boxShadow: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(captionColor)
+                        ? (lightMode ? "0 0 6px rgba(0,0,0,0.15)" : "0 0 6px rgba(255,255,255,0.3)")
+                        : "none",
+                      transition: "all 150ms ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <input
+                      type="color"
+                      value={captionColor}
+                      onChange={(e) => setCaptionColor(e.target.value)}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        opacity: 0,
+                        width: "100%",
+                        height: "100%",
+                        cursor: "pointer",
+                        border: "none",
+                        padding: 0,
+                      }}
+                    />
+                  </label>
                 </div>
 
                 {/* Fonts */}
@@ -1864,9 +1962,15 @@ export default function Home() {
                         fontSize: 13,
                         padding: "4px 10px",
                         borderRadius: 20,
-                        border: captionFont === f.key ? "1.5px solid rgba(255,255,255,0.8)" : "1px solid rgba(255,255,255,0.15)",
-                        background: captionFont === f.key ? "rgba(255,255,255,0.15)" : "transparent",
-                        color: captionFont === f.key ? "#fff" : "rgba(255,255,255,0.5)",
+                        border: captionFont === f.key
+                          ? (lightMode ? "1.5px solid rgba(0,0,0,0.5)" : "1.5px solid rgba(255,255,255,0.8)")
+                          : (lightMode ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.15)"),
+                        background: captionFont === f.key
+                          ? (lightMode ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.15)")
+                          : "transparent",
+                        color: captionFont === f.key
+                          ? (lightMode ? "#1a1a1a" : "#fff")
+                          : (lightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)"),
                         cursor: "pointer",
                         transition: "all 150ms ease",
                       }}
@@ -1888,9 +1992,15 @@ export default function Home() {
                         width: 32,
                         height: 32,
                         borderRadius: "50%",
-                        border: captionSize === s.key ? "1.5px solid rgba(255,255,255,0.8)" : "1px solid rgba(255,255,255,0.15)",
-                        background: captionSize === s.key ? "rgba(255,255,255,0.15)" : "transparent",
-                        color: captionSize === s.key ? "#fff" : "rgba(255,255,255,0.5)",
+                        border: captionSize === s.key
+                          ? (lightMode ? "1.5px solid rgba(0,0,0,0.5)" : "1.5px solid rgba(255,255,255,0.8)")
+                          : (lightMode ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.15)"),
+                        background: captionSize === s.key
+                          ? (lightMode ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.15)")
+                          : "transparent",
+                        color: captionSize === s.key
+                          ? (lightMode ? "#1a1a1a" : "#fff")
+                          : (lightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)"),
                         cursor: "pointer",
                         transition: "all 150ms ease",
                         display: "flex",
@@ -1911,13 +2021,16 @@ export default function Home() {
                 disabled={savingToFridge}
                 className="cursor-pointer"
                 style={{
-                  backgroundColor: savingToFridge ? "rgba(255,255,255,0.6)" : "rgb(255, 255, 255)",
+                  backgroundColor: lightMode
+                    ? (savingToFridge ? "rgba(0,0,0,0.5)" : "#1a1a1a")
+                    : (savingToFridge ? "rgba(255,255,255,0.6)" : "rgb(255, 255, 255)"),
                   borderRadius: "100px",
-                  boxShadow:
-                    "rgb(176, 176, 176) 0px 5px 0px 0px, rgba(0, 0, 0, 0.28) 0px 8px 14px 0px",
+                  boxShadow: lightMode
+                    ? "rgba(0,0,0,0.2) 0px 5px 0px 0px, rgba(0,0,0,0.15) 0px 8px 14px 0px"
+                    : "rgb(176, 176, 176) 0px 5px 0px 0px, rgba(0, 0, 0, 0.28) 0px 8px 14px 0px",
                   border: "none",
                   padding: "12px 28px",
-                  color: "#000",
+                  color: lightMode ? "#fff" : "#000",
                   fontSize: "15px",
                   fontWeight: 500,
                   opacity: savingToFridge ? 0.7 : 1,
@@ -1931,8 +2044,8 @@ export default function Home() {
                 onClick={handleDownload}
                 style={{
                   background: "transparent",
-                  color: "rgba(255,255,255,0.78)",
-                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: lightMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.78)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.18)" : "1px solid rgba(255,255,255,0.2)",
                   borderRadius: 999,
                   padding: "10px 20px",
                   fontSize: 14,
@@ -1941,12 +2054,12 @@ export default function Home() {
                   transition: "border-color 200ms, color 200ms",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)";
-                  e.currentTarget.style.color = "#fff";
+                  e.currentTarget.style.borderColor = lightMode ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.4)";
+                  e.currentTarget.style.color = lightMode ? "#1a1a1a" : "#fff";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-                  e.currentTarget.style.color = "rgba(255,255,255,0.78)";
+                  e.currentTarget.style.borderColor = lightMode ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.color = lightMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.78)";
                 }}
               >
                 Download
@@ -1962,8 +2075,8 @@ export default function Home() {
                 }}
                 style={{
                   background: "transparent",
-                  color: "rgba(255,255,255,0.78)",
-                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: lightMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.78)",
+                  border: lightMode ? "1px solid rgba(0,0,0,0.18)" : "1px solid rgba(255,255,255,0.2)",
                   borderRadius: 999,
                   padding: "10px 20px",
                   fontSize: 14,
@@ -1972,17 +2085,40 @@ export default function Home() {
                   transition: "border-color 200ms, color 200ms",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)";
-                  e.currentTarget.style.color = "#fff";
+                  e.currentTarget.style.borderColor = lightMode ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.4)";
+                  e.currentTarget.style.color = lightMode ? "#1a1a1a" : "#fff";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-                  e.currentTarget.style.color = "rgba(255,255,255,0.78)";
+                  e.currentTarget.style.borderColor = lightMode ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.color = lightMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.78)";
                 }}
               >
                 Take Another
               </button>
             </div>
+            <button
+              onClick={() => {
+                setCapturedImage(null);
+                setBoothPhotos([]);
+                setBoothMode(0);
+                setCaption("");
+                setStage("landing");
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: lightMode ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)",
+                fontSize: 13,
+                cursor: "pointer",
+                padding: "6px 12px",
+                marginTop: -4,
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = lightMode ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = lightMode ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)"; }}
+            >
+              ← Back to home
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

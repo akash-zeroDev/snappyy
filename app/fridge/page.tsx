@@ -61,11 +61,11 @@ function resolveFrameColor(key: string) {
 }
 
 const FRAME_SIZES = [
-  { key: "auto", label: "Auto", imgRatio: "auto", bottomPct: 18, canvasBottom: 0.16 },
-  { key: "compact", label: "Compact", imgRatio: "4 / 3", bottomPct: 12, canvasBottom: 0.12 },
-  { key: "classic", label: "Classic", imgRatio: "4 / 3", bottomPct: 22, canvasBottom: 0.20 },
-  { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 14, canvasBottom: 0.14 },
-  { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 18, canvasBottom: 0.16 },
+  { key: "auto", label: "Auto", imgRatio: "auto", bottomPct: 12, canvasBottom: 0.12 },
+  { key: "compact", label: "Compact", imgRatio: "4 / 3", bottomPct: 8, canvasBottom: 0.08 },
+  { key: "classic", label: "Classic", imgRatio: "3 / 4", bottomPct: 15, canvasBottom: 0.15 },
+  { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 10, canvasBottom: 0.10 },
+  { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 12, canvasBottom: 0.12 },
 ];
 
 type CustomFridge = {
@@ -75,6 +75,7 @@ type CustomFridge = {
   background: string;
   lineColor: string;
   textureIntensity: number;
+  customBgImage?: string;
 };
 
 const CUSTOM_KEY = "custom_fridges_v1";
@@ -103,6 +104,19 @@ function useIsMobile() {
 export default function FridgePage() {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [lightMode, setLightMode] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("oh_snap_theme");
+      if (saved === "light") setLightMode(true);
+    } catch {}
+  }, []);
+  const toggleTheme = () => {
+    setLightMode((p) => {
+      localStorage.setItem("oh_snap_theme", !p ? "light" : "dark");
+      return !p;
+    });
+  };
   const CARD_W = isMobile ? CARD_W_MOBILE : CARD_W_DESKTOP;
   const BOARD_HEIGHT = isMobile ? BOARD_HEIGHT_MOBILE : BOARD_HEIGHT_DESKTOP;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -123,6 +137,8 @@ export default function FridgePage() {
   const [showAddFridge, setShowAddFridge] = useState(false);
   const [newName, setNewName] = useState("");
   const [newStyle, setNewStyle] = useState(0);
+  const [newBgImage, setNewBgImage] = useState<string | null>(null);
+  const bgImageInputRef = useRef<HTMLInputElement>(null);
   const [fridgesLoaded, setFridgesLoaded] = useState(false);
   const [showShowcase, setShowShowcase] = useState(false);
   const [showcaseIds, setShowcaseIds] = useState<Set<string>>(new Set());
@@ -156,10 +172,11 @@ export default function FridgePage() {
   }, [customFridges, fridgesLoaded]);
 
   const ALL_FRIDGES = [
-    ...PAPER_PRESETS.map((p) => ({ name: p.name, props: p.props, custom: false as const })),
+    ...PAPER_PRESETS.map((p) => ({ name: p.name, props: p.props, custom: false as const, customBgImage: undefined as string | undefined })),
     ...customFridges.map((c) => ({
       name: c.name,
       custom: true as const,
+      customBgImage: c.customBgImage,
       props: {
         paperType: c.paperType,
         textureStyle: c.textureStyle,
@@ -173,12 +190,13 @@ export default function FridgePage() {
   const handleAddFridge = () => {
     const trimmed = newName.trim() || `My Fridge ${customFridges.length + 1}`;
     const tpl = STYLE_TEMPLATES[Math.max(0, Math.min(STYLE_TEMPLATES.length - 1, newStyle))];
-    const next: CustomFridge = { name: trimmed, ...tpl.preset };
+    const next: CustomFridge = { name: trimmed, ...tpl.preset, ...(newBgImage ? { customBgImage: newBgImage } : {}) };
     setCustomFridges((prev) => [...prev, next]);
-    setPreset(PAPER_PRESETS.length + customFridges.length); // jump to the newly added one
+    setPreset(PAPER_PRESETS.length + customFridges.length);
     setShowAddFridge(false);
     setNewName("");
     setNewStyle(0);
+    setNewBgImage(null);
   };
 
   const handleDeleteCustomFridge = (customIndex: number) => {
@@ -312,12 +330,143 @@ export default function FridgePage() {
       ctx.textBaseline = "middle";
       ctx.fillText(dateStr, cardW / 2, topPad + imgH + bottomPad * (m.caption?.trim() ? 0.78 : 0.5));
       ctx.restore();
+      ctx.save();
+      ctx.font = "32px 'Patrick Hand', cursive";
+      ctx.fillStyle = fText !== "#333" ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("MemoryPrint", cardW - sidePad, cardH - 16);
+      ctx.restore();
       const link = document.createElement("a");
       link.download = `memoryprint-${Date.now()}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
     img.src = m.image;
+  };
+
+  const [showDownloadPicker, setShowDownloadPicker] = useState(false);
+  const [downloadSelected, setDownloadSelected] = useState<Set<string>>(new Set());
+  const [downloadingSelected, setDownloadingSelected] = useState(false);
+
+  const openDownloadPicker = () => {
+    setDownloadSelected(new Set());
+    setShowDownloadPicker(true);
+  };
+
+  const toggleDownloadItem = (id: string) => {
+    setDownloadSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllDownload = () => {
+    const photoIds = memories.filter((m) => m.image).map((m) => m.id);
+    setDownloadSelected((prev) => prev.size === photoIds.length ? new Set() : new Set(photoIds));
+  };
+
+  const handleDownloadSelected = async () => {
+    const selected = memories.filter((m) => m.image && downloadSelected.has(m.id));
+    if (selected.length === 0) return;
+    setDownloadingSelected(true);
+    for (let i = 0; i < selected.length; i++) {
+      await new Promise<void>((resolve) => {
+        const m = selected[i];
+        renderMemoryToCanvas(m, (dataUrl) => {
+          const link = document.createElement("a");
+          link.download = `memoryprint-${i + 1}.png`;
+          link.href = dataUrl;
+          link.click();
+          setTimeout(resolve, 300);
+        }, resolve);
+      });
+    }
+    setDownloadingSelected(false);
+    setShowDownloadPicker(false);
+  };
+
+  const renderMemoryToCanvas = (m: FridgeMemory, onDone: (dataUrl: string) => void, onError?: () => void) => {
+    if (!m.image) { onError?.(); return; }
+    const canvas = document.createElement("canvas");
+    const cardW = 1800;
+    const sidePad = Math.round(cardW * 0.055);
+    const topPad = Math.round(cardW * 0.055);
+    const frameSizeCfg = FRAME_SIZES.find(f => f.key === (m.frameSize || "auto"));
+    const bottomPad = Math.round(cardW * (frameSizeCfg?.canvasBottom ?? 0.16));
+    const imgW = cardW - sidePad * 2;
+    const fc = resolveFrameColor(m.frameColor || "classic");
+    const isAuto = !m.frameSize || m.frameSize === "auto";
+    const imgRatioStr = frameSizeCfg?.imgRatio ?? "4 / 3";
+    const [rw, rh] = imgRatioStr.split("/").map(Number);
+    const img = new Image();
+    img.onload = () => {
+      const imgH = isAuto ? Math.round(imgW / (img.width / img.height)) : Math.round(imgW * (rh / rw));
+      const cardH = topPad + imgH + bottomPad;
+      canvas.width = cardW;
+      canvas.height = cardH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = fc.color;
+      ctx.fillRect(0, 0, cardW, cardH);
+      const srcA = img.width / img.height;
+      const tgtA = imgW / imgH;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (!isAuto && srcA > tgtA) { sw = img.height * tgtA; sx = (img.width - sw) / 2; }
+      else if (!isAuto) { sh = img.width / tgtA; sy = (img.height - sh) / 2; }
+      ctx.drawImage(img, sx, sy, sw, sh, sidePad, topPad, imgW, imgH);
+      if (m.caption?.trim()) {
+        ctx.save();
+        const canvasFont = FONT_OPTIONS.find(f => f.key === (m.captionFont || "patrick"))?.canvas ?? "Patrick Hand";
+        const canvasSize = (SIZE_OPTIONS.find(s => s.key === (m.captionSize || "md"))?.canvas ?? 42) * 2;
+        ctx.font = `${canvasSize}px '${canvasFont}', cursive`;
+        ctx.fillStyle = m.captionColor || fc.text;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(m.caption, cardW / 2, topPad + imgH + bottomPad * 0.45, imgW - 40);
+        ctx.restore();
+      }
+      const d = new Date(m.date);
+      const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      ctx.save();
+      ctx.font = "48px 'Patrick Hand', cursive";
+      ctx.fillStyle = fc.text !== "#333" ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(dateStr, cardW / 2, topPad + imgH + bottomPad * (m.caption?.trim() ? 0.78 : 0.5));
+      ctx.restore();
+      ctx.save();
+      ctx.font = "32px 'Patrick Hand', cursive";
+      ctx.fillStyle = fc.text !== "#333" ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("MemoryPrint", cardW - sidePad, cardH - 16);
+      ctx.restore();
+      onDone(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => onError?.();
+    img.src = m.image;
+  };
+
+  const fridgeBoardRef = useRef<HTMLDivElement>(null);
+  const handleFridgeScreenshot = async () => {
+    const el = fridgeBoardRef.current;
+    if (!el) return;
+    el.scrollIntoView({ block: "start" });
+    await new Promise((r) => setTimeout(r, 100));
+    const { default: html2canvas } = await import("html2canvas");
+    const fridgeProps = ALL_FRIDGES[preset]?.props ?? PAPER_PRESETS[0].props;
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: fridgeProps.background || "#ffffff",
+      scale: 2,
+      logging: false,
+    });
+    const link = document.createElement("a");
+    link.download = `my-fridge-${Date.now()}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
   };
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -418,8 +567,22 @@ export default function FridgePage() {
     return `${date}, ${time}`;
   };
 
+  const t = {
+    bg: lightMode ? "#f5f0eb" : "#0a0a0a",
+    text: lightMode ? "#1a1a1a" : "#fff",
+    textMuted: lightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.55)",
+    textSoft: lightMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.65)",
+    border: lightMode ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.18)",
+    borderSubtle: lightMode ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)",
+    navBg: lightMode ? "#f5f0eb" : "rgba(0,0,0,0.55)",
+    btnBg: lightMode ? "rgba(0,0,0,0.06)" : "transparent",
+    btnActiveBg: lightMode ? "#1a1a1a" : "#fff",
+    btnActiveText: lightMode ? "#fff" : "#0a0a0a",
+    dashBorder: lightMode ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.32)",
+  };
+
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+    <main style={{ minHeight: "100vh", background: t.bg }}>
       {/* Top navbar */}
       <nav
         className="navbar-root"
@@ -431,10 +594,10 @@ export default function FridgePage() {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "12px clamp(12px, 3vw, 28px)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          background: "rgba(0,0,0,0.55)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          backdropFilter: lightMode ? "none" : "blur(10px)",
+          WebkitBackdropFilter: lightMode ? "none" : "blur(10px)",
+          background: t.navBg,
+          borderBottom: lightMode ? "none" : `1px solid ${t.borderSubtle}`,
           fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
         }}
       >
@@ -442,7 +605,7 @@ export default function FridgePage() {
           href="/"
           className="navbar-brand"
           style={{
-            color: "#fff",
+            color: t.text,
             fontSize: 16,
             fontWeight: 500,
             letterSpacing: "-0.01em",
@@ -453,12 +616,32 @@ export default function FridgePage() {
         </Link>
         <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center" }}>
           <button
+            onClick={toggleTheme}
+            style={{
+              background: lightMode ? "rgba(0,0,0,0.06)" : "transparent",
+              border: `1px solid ${t.border}`,
+              borderRadius: 999,
+              padding: isMobile ? "5px 8px" : "7px 10px",
+              cursor: "pointer",
+              fontSize: 16,
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {lightMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            )}
+          </button>
+          <button
             onClick={() => setShowFeedback(true)}
             style={{
-              color: "rgba(255,255,255,0.55)",
+              color: t.textMuted,
               fontSize: isMobile ? 11 : 13,
               padding: isMobile ? "5px 10px" : "7px 14px",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: `1px solid ${t.border}`,
               borderRadius: 999,
               background: "transparent",
               cursor: "pointer",
@@ -466,14 +649,62 @@ export default function FridgePage() {
           >
             Feedback
           </button>
+          <div style={{ position: "relative" }}>
+            <Link
+              href="/coming-soon"
+              style={{
+                color: t.textMuted,
+                fontSize: isMobile ? 11 : 13,
+                padding: isMobile ? "5px 10px" : "7px 14px",
+                border: `1px solid ${t.border}`,
+                borderRadius: 999,
+                textDecoration: "none",
+                background: "transparent",
+                display: "inline-block",
+              }}
+            >
+              {isMobile ? "✨ Soon" : "✨ Brewing..."}
+            </Link>
+            {!isMobile && (
+              <div
+                className="navbar-hint"
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  pointerEvents: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 0,
+                }}
+              >
+                <svg width="20" height="18" viewBox="0 0 20 18" xmlns="http://www.w3.org/2000/svg" style={{ overflow: "visible" }}>
+                  <path d="M 10 2 C 10 6, 10 12, 10 16" fill="none" stroke="rgba(245,175,105,0.8)" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d="M 5 12 L 10 18 L 15 12" fill="none" stroke="rgba(245,175,105,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span style={{
+                  fontFamily: "var(--font-patrick-hand), 'Patrick Hand', cursive",
+                  fontSize: 13,
+                  color: "rgba(245,175,105,0.85)",
+                  whiteSpace: "nowrap",
+                  transform: "rotate(-3deg)",
+                  marginTop: 2,
+                }}>
+                  new stuff coming!
+                </span>
+              </div>
+            )}
+          </div>
           <Link
             href="/"
             className="navbar-cta"
             style={{
-              color: "rgba(255,255,255,0.78)",
+              color: t.textSoft,
               fontSize: isMobile ? 12 : 14,
               padding: isMobile ? "6px 12px" : "8px 16px",
-              border: "1px solid rgba(255,255,255,0.18)",
+              border: `1px solid ${t.border}`,
               borderRadius: 999,
               textDecoration: "none",
             }}
@@ -505,7 +736,7 @@ export default function FridgePage() {
                   fontSize: "clamp(28px, 7vw, 46px)",
                   fontWeight: 500,
                   letterSpacing: "-1.2px",
-                  color: "#fff",
+                  color: t.text,
                   margin: 0,
                 }}
               >
@@ -514,11 +745,19 @@ export default function FridgePage() {
               <p
                 style={{
                   fontSize: 15,
-                  color: "rgba(255,255,255,0.55)",
+                  color: t.textMuted,
                   margin: "10px 0 0",
                 }}
               >
                 Moments worth keeping.
+              </p>
+              <p style={{
+                fontSize: 14,
+                color: "rgba(245,175,105,0.85)",
+                fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
+                margin: "8px 0 0",
+              }}>
+                📌 Your photos stay on this device — clearing browser data or switching browsers will erase them.
               </p>
               <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: isMobile ? 10 : 14 }}>
                 <button
@@ -528,9 +767,9 @@ export default function FridgePage() {
                     borderRadius: 999,
                     fontSize: isMobile ? 11 : 12,
                     cursor: "pointer",
-                    background: showShowcase ? "#fff" : "transparent",
-                    color: showShowcase ? "#0a0a0a" : "rgba(255,255,255,0.65)",
-                    border: showShowcase ? "1px solid #fff" : "1px solid rgba(255,255,255,0.2)",
+                    background: showShowcase ? t.btnActiveBg : "transparent",
+                    color: showShowcase ? t.btnActiveText : t.textSoft,
+                    border: showShowcase ? `1px solid ${t.btnActiveBg}` : `1px solid ${t.border}`,
                     transition: "all 200ms",
                   }}
                 >
@@ -544,12 +783,44 @@ export default function FridgePage() {
                     fontSize: isMobile ? 11 : 12,
                     cursor: "pointer",
                     background: "transparent",
-                    color: "rgba(255,255,255,0.65)",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    color: t.textSoft,
+                    border: `1px solid ${t.border}`,
                   }}
                 >
                   Shuffle
                 </button>
+                {memories.some((m) => m.image) && (
+                  <>
+                    <button
+                      onClick={openDownloadPicker}
+                      style={{
+                        padding: isMobile ? "5px 12px" : "7px 16px",
+                        borderRadius: 999,
+                        fontSize: isMobile ? 11 : 12,
+                        cursor: "pointer",
+                        background: "transparent",
+                        color: t.textSoft,
+                        border: `1px solid ${t.border}`,
+                      }}
+                    >
+                      ⬇ Download
+                    </button>
+                    <button
+                      onClick={handleFridgeScreenshot}
+                      style={{
+                        padding: isMobile ? "5px 12px" : "7px 16px",
+                        borderRadius: 999,
+                        fontSize: isMobile ? 11 : 12,
+                        cursor: "pointer",
+                        background: "transparent",
+                        color: t.textSoft,
+                        border: `1px solid ${t.border}`,
+                      }}
+                    >
+                      📸 Fridge Screenshot
+                    </button>
+                  </>
+                )}
               </div>
               <AnimatePresence>
                 {showShowcase && (
@@ -581,7 +852,7 @@ export default function FridgePage() {
                               borderRadius: 6,
                               overflow: "hidden",
                               cursor: "pointer",
-                              border: selected ? "2px solid #fff" : "2px solid rgba(255,255,255,0.15)",
+                              border: selected ? `2px solid ${t.text}` : `2px solid ${t.border}`,
                               opacity: selected ? 1 : 0.45,
                               transition: "all 200ms",
                               flexShrink: 0,
@@ -595,7 +866,7 @@ export default function FridgePage() {
                       {showcaseIds.size > 0 && (
                         <button
                           onClick={() => { setShowcaseIds(new Set()); localStorage.removeItem("ring_showcase_ids"); }}
-                          style={{ padding: "4px 10px", borderRadius: 999, fontSize: 10, cursor: "pointer", background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.15)" }}
+                          style={{ padding: "4px 10px", borderRadius: 999, fontSize: 10, cursor: "pointer", background: "transparent", color: t.textMuted, border: `1px solid ${t.border}` }}
                         >
                           Reset
                         </button>
@@ -629,9 +900,9 @@ export default function FridgePage() {
                       borderRadius: 999,
                       fontSize: isMobile ? 11 : 13,
                       cursor: "pointer",
-                      background: isActive ? "#fff" : "transparent",
-                      color: isActive ? "#0a0a0a" : "rgba(255,255,255,0.75)",
-                      border: isActive ? "1px solid #fff" : "1px solid rgba(255,255,255,0.18)",
+                      background: isActive ? t.btnActiveBg : "transparent",
+                      color: isActive ? t.btnActiveText : t.textSoft,
+                      border: isActive ? `1px solid ${t.btnActiveBg}` : `1px solid ${t.border}`,
                       transition: "background 200ms, color 200ms, border-color 200ms",
                     }}
                   >
@@ -646,9 +917,9 @@ export default function FridgePage() {
                         width: 22,
                         height: 22,
                         borderRadius: 999,
-                        border: "1px solid rgba(255,255,255,0.18)",
+                        border: `1px solid ${t.border}`,
                         background: "transparent",
-                        color: "rgba(255,255,255,0.6)",
+                        color: t.textMuted,
                         fontSize: 12,
                         lineHeight: 1,
                         cursor: "pointer",
@@ -669,8 +940,8 @@ export default function FridgePage() {
                 fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
-                color: "rgba(255,255,255,0.85)",
-                border: "1px dashed rgba(255,255,255,0.32)",
+                color: t.textSoft,
+                border: `1px dashed ${t.dashBorder}`,
               }}
             >
               + Add fridge
@@ -683,8 +954,8 @@ export default function FridgePage() {
                 fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
-                color: "rgba(255,255,255,0.85)",
-                border: "1px dashed rgba(255,255,255,0.32)",
+                color: t.textSoft,
+                border: `1px dashed ${t.dashBorder}`,
               }}
             >
               + Add note
@@ -697,8 +968,8 @@ export default function FridgePage() {
                 fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
                 background: "transparent",
-                color: "rgba(255,255,255,0.85)",
-                border: "1px dashed rgba(255,255,255,0.32)",
+                color: t.textSoft,
+                border: `1px dashed ${t.dashBorder}`,
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
@@ -718,9 +989,9 @@ export default function FridgePage() {
                 borderRadius: 999,
                 fontSize: isMobile ? 11 : 13,
                 cursor: "pointer",
-                background: "rgba(255,255,255,0.12)",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.25)",
+                background: lightMode ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.12)",
+                color: t.text,
+                border: `1px solid ${t.border}`,
                 textDecoration: "none",
                 display: "flex",
                 alignItems: "center",
@@ -743,6 +1014,7 @@ export default function FridgePage() {
           </div>
 
           {/* Memory board */}
+          <div ref={fridgeBoardRef}>
           <PaperBackground
             {...(ALL_FRIDGES[preset]?.props ?? PAPER_PRESETS[0].props)}
             shadow
@@ -751,6 +1023,11 @@ export default function FridgePage() {
               border: "1px solid rgba(0,0,0,0.18)",
               minHeight: BOARD_HEIGHT,
               position: "relative",
+              ...(ALL_FRIDGES[preset]?.customBgImage ? {
+                backgroundImage: `url(${ALL_FRIDGES[preset].customBgImage})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              } : {}),
             }}
           >
             <div
@@ -986,9 +1263,11 @@ export default function FridgePage() {
               })}
             </div>
           </PaperBackground>
+          </div>
           {/* Showcase grid moved to under heading */}
         </div>
       </section>
+
 
       <AnimatePresence>
         {open && (
@@ -1184,7 +1463,7 @@ export default function FridgePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "8px 0" }}>
                 {/* Colors */}
                 <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-                  {["#333", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].map((c) => (
+                  {["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].map((c) => (
                     <button
                       key={c}
                       onClick={() => {
@@ -1201,12 +1480,54 @@ export default function FridgePage() {
                         height: modalCaptionColor === c ? 22 : 16,
                         borderRadius: "50%",
                         backgroundColor: c,
-                        border: modalCaptionColor === c ? "2px solid rgba(0,0,0,0.3)" : "1.5px solid rgba(0,0,0,0.1)",
+                        border: modalCaptionColor === c ? "2px solid rgba(0,0,0,0.3)" : c === "#fff" ? "1.5px solid rgba(0,0,0,0.2)" : "1.5px solid rgba(0,0,0,0.1)",
                         cursor: "pointer",
                         transition: "all 150ms ease",
                       }}
                     />
                   ))}
+                  <label
+                    title="Pick any color"
+                    style={{
+                      width: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(modalCaptionColor) ? 22 : 16,
+                      height: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(modalCaptionColor) ? 22 : 16,
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      position: "relative",
+                      overflow: "hidden",
+                      border: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(modalCaptionColor)
+                        ? "2px solid rgba(0,0,0,0.3)"
+                        : "1.5px solid rgba(0,0,0,0.1)",
+                      background: !["#333", "#fff", "#1a6dd4", "#c0392b", "#27ae60", "#8e44ad", "#e67e22"].includes(modalCaptionColor)
+                        ? modalCaptionColor
+                        : "conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    <input
+                      type="color"
+                      value={modalCaptionColor}
+                      onChange={(e) => {
+                        setModalCaptionColor(e.target.value);
+                        if (open.caption || modalCaption) {
+                          const updated = { ...open, captionColor: e.target.value };
+                          putMemory(updated).catch(() => {});
+                          setMemories((prev) => prev.map((m) => (m.id === open.id ? updated : m)));
+                          setOpen(updated);
+                        }
+                      }}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        opacity: 0,
+                        width: "100%",
+                        height: "100%",
+                        cursor: "pointer",
+                        border: "none",
+                        padding: 0,
+                      }}
+                    />
+                  </label>
                 </div>
 
                 {/* Fonts */}
@@ -1541,20 +1862,20 @@ export default function FridgePage() {
               onClick={(e) => e.stopPropagation()}
               style={{
                 width: "min(440px, 95vw)",
-                background: "#111",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: lightMode ? "#fff" : "#111",
+                border: `1px solid ${t.border}`,
                 borderRadius: 14,
                 padding: 24,
-                color: "#fff",
+                color: t.text,
                 fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
               }}
             >
               <h3 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Add a new fridge</h3>
-              <p style={{ margin: "4px 0 18px", fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
+              <p style={{ margin: "4px 0 18px", fontSize: 13, color: t.textMuted }}>
                 Name it, pick a paper style.
               </p>
 
-              <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 6 }}>
+              <label style={{ display: "block", fontSize: 12, color: t.textMuted, marginBottom: 6 }}>
                 Name
               </label>
               <input
@@ -1566,9 +1887,9 @@ export default function FridgePage() {
                   width: "100%",
                   padding: "10px 12px",
                   borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "#0a0a0a",
-                  color: "#fff",
+                  border: `1px solid ${t.border}`,
+                  background: lightMode ? "#f5f0eb" : "#0a0a0a",
+                  color: t.text,
                   fontSize: 14,
                   outline: "none",
                   marginBottom: 16,
@@ -1578,18 +1899,18 @@ export default function FridgePage() {
                 }}
               />
 
-              <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>
+              <label style={{ display: "block", fontSize: 12, color: t.textMuted, marginBottom: 8 }}>
                 Style
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 22 }}>
-                {STYLE_TEMPLATES.map((t, i) => (
+                {STYLE_TEMPLATES.map((st, i) => (
                   <button
-                    key={t.label}
-                    onClick={() => setNewStyle(i)}
+                    key={st.label}
+                    onClick={() => { setNewStyle(i); setNewBgImage(null); }}
                     style={{
                       padding: 0,
                       borderRadius: 10,
-                      border: newStyle === i ? "2px solid #fff" : "1px solid rgba(255,255,255,0.14)",
+                      border: newStyle === i && !newBgImage ? `2px solid ${t.text}` : `1px solid ${t.border}`,
                       cursor: "pointer",
                       overflow: "hidden",
                       height: 56,
@@ -1597,7 +1918,7 @@ export default function FridgePage() {
                     }}
                   >
                     <PaperBackground
-                      {...t.preset}
+                      {...st.preset}
                       style={{ width: "100%", height: "100%" }}
                     >
                       <div
@@ -1613,11 +1934,58 @@ export default function FridgePage() {
                           letterSpacing: "0.04em",
                         }}
                       >
-                        {t.label}
+                        {st.label}
                       </div>
                     </PaperBackground>
                   </button>
                 ))}
+                <button
+                  onClick={() => bgImageInputRef.current?.click()}
+                  style={{
+                    padding: 0,
+                    borderRadius: 10,
+                    border: newBgImage ? `2px solid ${t.text}` : `1px solid ${t.border}`,
+                    cursor: "pointer",
+                    overflow: "hidden",
+                    height: 56,
+                    background: newBgImage ? `url(${newBgImage}) center/cover` : (lightMode ? "#e8e2db" : "#1a1a1a"),
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 2,
+                  }}
+                >
+                  {!newBgImage && (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>
+                      <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 600 }}>Gallery</span>
+                    </>
+                  )}
+                  {newBgImage && (
+                    <span style={{ fontSize: 9, color: "#fff", fontWeight: 700, textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>Custom</span>
+                  )}
+                </button>
+                <input
+                  ref={bgImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setNewBgImage(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = "";
+                  }}
+                />
               </div>
 
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -1628,8 +1996,8 @@ export default function FridgePage() {
                     borderRadius: 999,
                     fontSize: 13,
                     background: "transparent",
-                    color: "rgba(255,255,255,0.7)",
-                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: t.textSoft,
+                    border: `1px solid ${t.border}`,
                     cursor: "pointer",
                   }}
                 >
@@ -1641,9 +2009,9 @@ export default function FridgePage() {
                     padding: "9px 20px",
                     borderRadius: 999,
                     fontSize: 13,
-                    background: "#fff",
-                    color: "#0a0a0a",
-                    border: "1px solid #fff",
+                    background: t.btnActiveBg,
+                    color: t.btnActiveText,
+                    border: `1px solid ${t.btnActiveBg}`,
                     cursor: "pointer",
                     fontWeight: 500,
                   }}
@@ -1656,6 +2024,158 @@ export default function FridgePage() {
         )}
       </AnimatePresence>
       <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
+
+      {/* Download Picker Modal */}
+      <AnimatePresence>
+        {showDownloadPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 200,
+              background: "rgba(0,0,0,0.7)",
+              backdropFilter: "blur(6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+            }}
+            onClick={() => setShowDownloadPicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "min(520px, 95vw)",
+                maxHeight: "80vh",
+                background: lightMode ? "#fff" : "#1a1a1a",
+                borderRadius: 16,
+                border: `1px solid ${t.border}`,
+                padding: 24,
+                color: t.text,
+                display: "flex",
+                flexDirection: "column",
+                fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 500 }}>Pick photos to download</h3>
+                <button
+                  onClick={selectAllDownload}
+                  style={{
+                    fontSize: 12,
+                    color: t.textMuted,
+                    background: "transparent",
+                    border: `1px solid ${t.border}`,
+                    borderRadius: 999,
+                    padding: "4px 12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {downloadSelected.size === memories.filter((m) => m.image).length ? "Deselect all" : "Select all"}
+                </button>
+              </div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
+                gap: 8,
+                overflowY: "auto",
+                flex: 1,
+                paddingBottom: 16,
+              }}>
+                {memories.filter((m) => m.image).map((m) => {
+                  const selected = downloadSelected.has(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => toggleDownloadItem(m.id)}
+                      style={{
+                        padding: 0,
+                        border: selected ? `3px solid #3b82f6` : `2px solid ${t.border}`,
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                        aspectRatio: "1",
+                        background: "transparent",
+                      }}
+                    >
+                      <img
+                        src={m.image}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                          opacity: selected ? 1 : 0.6,
+                          transition: "opacity 0.15s",
+                        }}
+                      />
+                      {selected && (
+                        <div style={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          width: 20,
+                          height: 20,
+                          borderRadius: "50%",
+                          background: "#3b82f6",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", paddingTop: 8, borderTop: `1px solid ${t.border}` }}>
+                <button
+                  onClick={() => setShowDownloadPicker(false)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    background: "transparent",
+                    color: t.textSoft,
+                    border: `1px solid ${t.border}`,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDownloadSelected}
+                  disabled={downloadSelected.size === 0 || downloadingSelected}
+                  style={{
+                    padding: "9px 20px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    background: downloadSelected.size > 0 ? t.btnActiveBg : (lightMode ? "#ddd" : "#333"),
+                    color: downloadSelected.size > 0 ? t.btnActiveText : t.textMuted,
+                    border: "none",
+                    cursor: downloadSelected.size > 0 ? "pointer" : "not-allowed",
+                    fontWeight: 500,
+                    opacity: downloadingSelected ? 0.6 : 1,
+                  }}
+                >
+                  {downloadingSelected ? "Downloading..." : `Download ${downloadSelected.size > 0 ? `(${downloadSelected.size})` : ""}`}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add Note Modal */}
       <AnimatePresence>
@@ -1687,9 +2207,9 @@ export default function FridgePage() {
               style={{
                 width: "100%",
                 maxWidth: 380,
-                background: "#141414",
+                background: lightMode ? "#fff" : "#141414",
                 borderRadius: 20,
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: `1px solid ${t.borderSubtle}`,
                 padding: "24px 22px",
               }}
             >
@@ -1697,7 +2217,7 @@ export default function FridgePage() {
                 style={{
                   fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
                   fontSize: 22,
-                  color: "#fff",
+                  color: t.text,
                   textAlign: "center",
                   margin: "0 0 18px",
                 }}
@@ -1722,7 +2242,7 @@ export default function FridgePage() {
                     title={c.label}
                     style={{
                       width: 24, height: 24, borderRadius: "50%", background: c.color,
-                      border: noteColor === c.color ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.15)",
+                      border: noteColor === c.color ? `2.5px solid ${t.text}` : `2px solid ${t.border}`,
                       cursor: "pointer", transition: "all 0.2s",
                     }}
                   />
@@ -1743,9 +2263,9 @@ export default function FridgePage() {
                     onClick={() => setActiveFont(f.value)}
                     style={{
                       padding: "4px 10px", borderRadius: 8, fontSize: 11,
-                      fontFamily: f.value, color: activeFont === f.value ? "#fff" : "rgba(255,255,255,0.4)",
-                      border: activeFont === f.value ? "1.5px solid rgba(255,255,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
-                      background: activeFont === f.value ? "rgba(255,255,255,0.1)" : "transparent",
+                      fontFamily: f.value, color: activeFont === f.value ? t.text : t.textMuted,
+                      border: activeFont === f.value ? `1.5px solid ${t.border}` : `1px solid ${t.borderSubtle}`,
+                      background: activeFont === f.value ? (lightMode ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.1)") : "transparent",
                       cursor: "pointer", transition: "all 0.15s",
                     }}
                   >
@@ -1756,16 +2276,16 @@ export default function FridgePage() {
 
               {/* Size picker */}
               <div style={{ display: "flex", gap: 6, marginBottom: 12, alignItems: "center" }}>
-                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-patrick-hand)" }}>Size</span>
+                <span style={{ fontSize: 11, color: t.textMuted, fontFamily: "var(--font-patrick-hand)" }}>Size</span>
                 {[12, 16, 20, 26, 34].map((s) => (
                   <button
                     key={s}
                     onClick={() => setActiveSize(s)}
                     style={{
                       padding: "3px 8px", borderRadius: 6, fontSize: 11,
-                      color: activeSize === s ? "#fff" : "rgba(255,255,255,0.4)",
-                      border: activeSize === s ? "1.5px solid rgba(255,255,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
-                      background: activeSize === s ? "rgba(255,255,255,0.1)" : "transparent",
+                      color: activeSize === s ? t.text : t.textMuted,
+                      border: activeSize === s ? `1.5px solid ${t.border}` : `1px solid ${t.borderSubtle}`,
+                      background: activeSize === s ? (lightMode ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.1)") : "transparent",
                       cursor: "pointer", transition: "all 0.15s",
                       fontFamily: "var(--font-patrick-hand)",
                     }}
@@ -1922,8 +2442,8 @@ export default function FridgePage() {
                       ]);
                     }}
                     style={{
-                      fontSize: 18, background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                      fontSize: 18, background: lightMode ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${t.borderSubtle}`, borderRadius: 8,
                       padding: "3px 5px", cursor: "pointer",
                     }}
                   >
@@ -1942,8 +2462,8 @@ export default function FridgePage() {
                   }}
                   style={{
                     flex: 1, padding: "10px", borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.15)", background: "transparent",
-                    color: "rgba(255,255,255,0.6)", fontSize: 14, cursor: "pointer",
+                    border: `1px solid ${t.border}`, background: "transparent",
+                    color: t.textSoft, fontSize: 14, cursor: "pointer",
                     fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
                   }}
                 >
@@ -1956,13 +2476,13 @@ export default function FridgePage() {
                     padding: "10px",
                     borderRadius: 999,
                     border: "none",
-                    background: "#fff",
-                    color: "#0a0a0a",
+                    background: t.btnActiveBg,
+                    color: t.btnActiveText,
                     fontSize: 14,
                     cursor: "pointer",
                     fontWeight: 600,
                     fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
-                    boxShadow: "rgb(80,80,80) 0px 3px 0px 0px",
+                    boxShadow: lightMode ? "rgba(0,0,0,0.15) 0px 3px 0px 0px" : "rgb(80,80,80) 0px 3px 0px 0px",
                   }}
                 >
                   Stick it! 📋
