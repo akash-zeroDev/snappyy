@@ -17,7 +17,7 @@ import {
 const BOARD_HEIGHT_DESKTOP = 1100;
 const BOARD_HEIGHT_MOBILE = 700;
 const CARD_W_DESKTOP = 280;
-const CARD_W_MOBILE = 180;
+const CARD_W_MOBILE = 150;
 
 const FONT_OPTIONS = [
   { key: "patrick", label: "Handwriting", css: "var(--font-patrick-hand), 'Patrick Hand', cursive", canvas: "Patrick Hand" },
@@ -614,7 +614,7 @@ export default function FridgePage() {
         >
           MemoryPrint
         </Link>
-        <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: isMobile ? 4 : 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button
             onClick={toggleTheme}
             style={{
@@ -759,7 +759,7 @@ export default function FridgePage() {
               }}>
                 📌 Your photos stay on this device — clearing browser data or switching browsers will erase them.
               </p>
-              <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: isMobile ? 10 : 14 }}>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: isMobile ? 10 : 14, flexWrap: "wrap" }}>
                 <button
                   onClick={() => setShowShowcase((p) => !p)}
                   style={{

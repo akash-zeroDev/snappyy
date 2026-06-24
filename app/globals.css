@@ -163,8 +163,7 @@ video {
   .fridge-section { padding-left: 14px !important; padding-right: 14px !important; padding-top: 36px !important; }
   .fridge-heading { font-size: 32px !important; line-height: 36px !important; letter-spacing: -1.2px !important; }
 
-  /* Fridge memory cards — narrower so multiple fit */
-  .fridge-card { width: 150px !important; }
+  /* Fridge memory card width controlled by JS isMobile hook */
 
   /* Modals — full-width with side padding */
   .fridge-modal-inner { width: min(95vw, 480px) !important; }
@@ -186,7 +185,6 @@ video {
 @media (max-width: 380px) {
   .hero-heading { font-size: 32px !important; line-height: 36px !important; }
   .fridge-heading { font-size: 28px !important; line-height: 32px !important; }
-  .fridge-card { width: 130px !important; }
 }
 
 /* ============================================================
