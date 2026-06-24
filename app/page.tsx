@@ -547,7 +547,7 @@ export default function Home() {
           WebkitBackdropFilter: lightMode ? "none" : "blur(10px)",
           background: lightMode ? "#f5f0eb" : "rgba(0,0,0,0.35)",
           borderBottom: lightMode ? "none" : "1px solid rgba(255,255,255,0.06)",
-          fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         <Link
@@ -716,7 +716,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="framer-landing"
+            className="mp-landing"
             style={{ minHeight: "100vh", width: "auto", position: "relative", overflow: "hidden" }}
           >
             {/* Warm amber bottom-corner glows — cinematic mood */}
@@ -754,10 +754,10 @@ export default function Home() {
 
             {/* 3D rotating media ring behind camera */}
             <div className="scene3d-wrap" aria-hidden>
-              <div className="framer-3dscene">
-                <div className="framer-a3d-wrap">
+              <div className="ring-scene">
+                <div className="ring-inner-wrap">
                   <div
-                    className="framer-a3d"
+                    className="ring-inner"
                     style={{
                       ["--n" as never]: 14,
                       ["--w" as never]: "25em",
@@ -766,7 +766,7 @@ export default function Home() {
                     {Array.from({ length: 14 }).map((_, i) => (
                       <div
                         key={i}
-                        className="framer-card"
+                        className="ring-card"
                         style={{ ["--i" as never]: i }}
                       >
                         {isCustomRing ? (
@@ -907,7 +907,7 @@ export default function Home() {
                     className="hero-heading"
                     style={{
                       fontFamily:
-                        '"GT Walsheim Framer Regular", "GT Walsheim Framer Regular Placeholder", sans-serif',
+                        'system-ui, -apple-system, sans-serif',
                       fontSize: "clamp(32px, 8vw, 51px)",
                       fontWeight: 500,
                       letterSpacing: "-1.5px",

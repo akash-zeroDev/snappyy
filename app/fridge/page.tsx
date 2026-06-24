@@ -272,6 +272,12 @@ export default function FridgePage() {
     await putMemory(updated);
   };
 
+  const handleRotate = async (m: FridgeMemory, deg: number) => {
+    const updated = { ...m, rotate: (m.rotate || 0) + deg };
+    setMemories((prev) => prev.map((p) => (p.id === m.id ? updated : p)));
+    await putMemory(updated);
+  };
+
   const handleDelete = async (id: string) => {
     await deleteMemory(id);
     setMemories((prev) => prev.filter((p) => p.id !== id));
@@ -598,7 +604,7 @@ export default function FridgePage() {
           WebkitBackdropFilter: lightMode ? "none" : "blur(10px)",
           background: t.navBg,
           borderBottom: lightMode ? "none" : `1px solid ${t.borderSubtle}`,
-          fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         <Link
@@ -732,7 +738,7 @@ export default function FridgePage() {
               <h1
                 className="fridge-heading"
                 style={{
-                  fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
                   fontSize: "clamp(28px, 7vw, 46px)",
                   fontWeight: 500,
                   letterSpacing: "-1.2px",
@@ -1110,6 +1116,43 @@ export default function FridgePage() {
                     userSelect: "none",
                   }}
                 >
+                  {/* Rotate buttons — visible on hover */}
+                  <div
+                    className="rotate-btns"
+                    style={{
+                      position: "absolute",
+                      top: -28,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      display: "flex",
+                      gap: 2,
+                      zIndex: 60,
+                      opacity: 0,
+                      transition: "opacity 0.15s",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <button
+                      onPointerDown={(e) => { e.stopPropagation(); handleRotate(m, -15); }}
+                      style={{
+                        width: 24, height: 24, borderRadius: "50%",
+                        background: "rgba(0,0,0,0.65)", border: "none", color: "#fff",
+                        fontSize: 13, cursor: "pointer", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        pointerEvents: "auto",
+                      }}
+                    >↺</button>
+                    <button
+                      onPointerDown={(e) => { e.stopPropagation(); handleRotate(m, 15); }}
+                      style={{
+                        width: 24, height: 24, borderRadius: "50%",
+                        background: "rgba(0,0,0,0.65)", border: "none", color: "#fff",
+                        fontSize: 13, cursor: "pointer", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        pointerEvents: "auto",
+                      }}
+                    >↻</button>
+                  </div>
                   {m.type === "note" ? (
                     <div
                       style={{
@@ -1867,7 +1910,7 @@ export default function FridgePage() {
                 borderRadius: 14,
                 padding: 24,
                 color: t.text,
-                fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
               }}
             >
               <h3 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Add a new fridge</h3>
@@ -2060,7 +2103,7 @@ export default function FridgePage() {
                 color: t.text,
                 display: "flex",
                 flexDirection: "column",
-                fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

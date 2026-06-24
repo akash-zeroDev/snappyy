@@ -85,7 +85,7 @@ export default function ComingSoonPage() {
         minHeight: "100vh",
         background: t.bg,
         color: t.text,
-        fontFamily: '"GT Walsheim Framer Regular", system-ui, sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         transition: "background 0.3s, color 0.3s",
         overflow: "hidden",
       }}

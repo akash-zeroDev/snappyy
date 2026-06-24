@@ -54,18 +54,18 @@ video {
   100% { transform: translate(6px, -8px) rotate(-4deg); }
 }
 
-/* 3D rotating media ring — exact framer-3dscene structure */
+/* 3D rotating media ring */
 .scene3d-wrap {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
 }
-.framer-3dscene,
-.framer-a3d {
+.ring-scene,
+.ring-inner {
   display: grid;
 }
-.framer-3dscene {
+.ring-scene {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -75,7 +75,7 @@ video {
   mask: linear-gradient(90deg, #0000, #000 20%, #000 80%, #0000);
   position: relative;
 }
-.framer-3dscene::after {
+.ring-scene::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -83,22 +83,22 @@ video {
   background: linear-gradient(90deg, #000 0%, #0000 20%, #0000 80%, #000 100%);
   z-index: 2;
 }
-.framer-3dscene > * {
+.ring-scene > * {
   position: relative;
   z-index: 1;
 }
-.framer-a3d-wrap {
+.ring-inner-wrap {
   place-self: center;
   transform-style: preserve-3d;
   will-change: transform;
 }
-.framer-a3d {
+.ring-inner {
   transform-style: preserve-3d;
-  animation: framer-ry 28s linear infinite reverse;
+  animation: ring-spin 28s linear infinite reverse;
   will-change: transform;
 }
-@keyframes framer-ry { to { transform: rotateY(1turn); } }
-.framer-card {
+@keyframes ring-spin { to { transform: rotateY(1turn); } }
+.ring-card {
   grid-area: 1 / 1;
   width: var(--w);
   aspect-ratio: 5.5 / 9.5;
@@ -110,7 +110,11 @@ video {
   overflow: hidden;
   position: relative;
 }
-.framer-card img {
+.fridge-card:hover .rotate-btns {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+.ring-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -126,7 +130,7 @@ video {
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .framer-a3d { animation-duration: 112s; }
+  .ring-inner { animation-duration: 112s; }
 }
 
 /* ============================================================
@@ -135,7 +139,7 @@ video {
 
 /* Tablet and below */
 @media (max-width: 900px) {
-  .framer-a3d { animation-duration: 36s; }
+  .ring-inner { animation-duration: 36s; }
   .scene3d-fade {
     background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.97) 90%);
   }
@@ -153,7 +157,7 @@ video {
   .hero-cta { margin-top: 60px !important; }
 
   /* Camera ring backdrop — slow it down, less aggressive perspective so cards don't crowd */
-  .framer-3dscene { perspective: 36em !important; }
+  .ring-scene { perspective: 36em !important; }
 
   /* Profile card — stack vertically on phones */
   .fridge-hero { flex-direction: column !important; gap: 20px !important; }
@@ -208,9 +212,9 @@ video {
 .theme-light .scene3d-fade {
   background: radial-gradient(ellipse 50% 45% at 50% 50%, rgba(245,240,235,0.5) 0%, rgba(245,240,235,0.82) 55%, rgba(245,240,235,0.97) 90%) !important;
 }
-.theme-light .framer-3dscene::after {
+.theme-light .ring-scene::after {
   background: linear-gradient(90deg, #f5f0eb 0%, transparent 20%, transparent 80%, #f5f0eb 100%) !important;
 }
-.theme-light .framer-card img {
+.theme-light .ring-card img {
   filter: brightness(0.85) saturate(0.9) contrast(0.95) !important;
 }
