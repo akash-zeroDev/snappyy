@@ -750,7 +750,30 @@ export default function Home() {
                 mixBlendMode: "screen",
               }}
             />
+            {/* Popcorn scattered at camera base — spread horizontally */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/pop_bg.png"
+              alt=""
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: "-35%",
+                transform: "translateX(-50%)",
+                width: "100vw",
+                maxWidth: "1600px",
+                height: "auto",
+                zIndex: 4,
+                pointerEvents: "none",
+                mixBlendMode: "screen",
+                opacity: lightMode ? 0 : 1,
+                transition: "opacity 300ms ease",
 
+                WebkitMaskImage: "radial-gradient(ellipse 90% 50% at 50% 50%, black 50%, transparent 100%)",
+                maskImage: "radial-gradient(ellipse 90% 50% at 50% 50%, black 50%, transparent 100%)",
+              }}
+            />
 
             {/* 3D rotating media ring behind camera */}
             <div className="scene3d-wrap" aria-hidden>
@@ -914,7 +937,7 @@ export default function Home() {
                       lineHeight: 1.1,
                       textAlign: "center",
                       color: lightMode ? "#1a1a1a" : "rgb(255, 255, 255)",
-                      margin: 0,
+                      marginTop:"10px" ,
                       position: "relative",
                       zIndex: 1,
                     }}

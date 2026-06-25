@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "../lib/supabaseClient";
 
 const MOOD_OPTIONS = [
   { emoji: "🤩", label: "Love it!", value: "love" },
@@ -57,10 +58,17 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
       date: new Date().toISOString(),
     };
     try {
-      const prev = JSON.parse(localStorage.getItem("memoryprint_feedback") ?? "[]");
-      prev.push(entry);
-      localStorage.setItem("memoryprint_feedback", JSON.stringify(prev));
-    } catch {}
+      // Send data to Supabase
+      supabase.from("feedback").insert([{
+        mood: entry.mood,
+        tags: entry.tags,
+        message: entry.message
+      }]).then(({ error }) => {
+        if (error) console.error("Supabase insert error:", error);
+      });
+    } catch (err:any){
+      console.error("Unexpected error:", err.message);
+    }
 
     setSubmitted(true);
   };
