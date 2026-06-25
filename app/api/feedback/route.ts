@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { supabase } from '../../../lib/supabaseClient';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
@@ -18,10 +16,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to store feedback: ' + supabaseError.message }, { status: 500 });
     }
 
-    // 2. Send email via Resend
-    const { data, error: resendError } = await resend.emails.send({
-      from: 'MemoryPrint Feedback <onboarding@resend.dev>', // Resend testing domain
-      to: ['akashkumar7653099@gmail.com'],
+    // 2. Send email via Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: `"MemoryPrint Feedback" <${process.env.GMAIL_USER}>`,
+      to: ['akashkumar7653011@gmail.com', 'srivastavaalok2214@gmail.com'],
       subject: 'New Feedback Received - MemoryPrint',
       html: `
         <h2>New Feedback Submission</h2>
@@ -33,14 +39,15 @@ export async function POST(req: Request) {
           ${message || 'No message provided'}
         </blockquote>
       `,
-    });
+    };
 
-    if (resendError) {
-      console.error('Resend error:', resendError);
-      return NextResponse.json({ error: 'Email failed: ' + resendError.message }, { status: 500 });
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      return NextResponse.json({ success: true, data: info.messageId });
+    } catch (mailError: any) {
+      console.error('Nodemailer error:', mailError);
+      return NextResponse.json({ error: 'Email failed: ' + mailError.message }, { status: 500 });
     }
-
-    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

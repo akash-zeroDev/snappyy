@@ -48,8 +48,34 @@ const satisfy = Satisfy({
 });
 
 export const metadata: Metadata = {
-  title: "MemoryPrint — Your Polaroid Moments",
-  description: "Capture, print, and collect your Polaroid memories.",
+  title: {
+    template: '%s | MemoryPrint',
+    default: 'MemoryPrint - The Virtual Photo Booth',
+  },
+  description: 'An immersive, interactive virtual photo booth and digital memory board. Capture, customize, and save digital polaroids directly in your browser.',
+  keywords: ['virtual photo booth', 'digital polaroids', 'online scrapbooking', 'polaroid frame', 'photo strips'],
+  openGraph: {
+    title: 'MemoryPrint',
+    description: 'Bring the nostalgic charm of Polaroid cameras to your browser.',
+    url: 'https://memoryprint.app', // Using .app or whatever they host on
+    siteName: 'MemoryPrint',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'MemoryPrint Virtual Photo Booth',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MemoryPrint',
+    description: 'Capture, customize, and save digital polaroids directly in your browser.',
+    images: ['/og-image.png'],
+  },
 };
 
 export const viewport: Viewport = {
@@ -58,6 +84,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   viewportFit: "cover",
 };
+
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default function RootLayout({
   children,
@@ -70,6 +98,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${patrickHand.variable} ${caveat.variable} ${permanentMarker.variable} ${indieFlower.variable} ${shadowsIntoLight.variable} ${satisfy.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>{children}</body>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || "G-XXXXXXXXXX"} />
     </html>
   );
 }

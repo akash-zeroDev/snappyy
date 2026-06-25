@@ -517,30 +517,7 @@ export default function FridgePage() {
     );
   }, [preset]);
 
-  useEffect(() => {
-    let lastShake = 0;
-    const threshold = 25;
-    const handleMotion = (e: DeviceMotionEvent) => {
-      const acc = e.accelerationIncludingGravity;
-      if (!acc) return;
-      const total = Math.abs(acc.x ?? 0) + Math.abs(acc.y ?? 0) + Math.abs(acc.z ?? 0);
-      if (total > threshold && Date.now() - lastShake > 1000) {
-        lastShake = Date.now();
-        shuffleCards();
-      }
-    };
-    const requestPermission = async () => {
-      if (typeof (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission === "function") {
-        try {
-          const result = await (DeviceMotionEvent as unknown as { requestPermission: () => Promise<string> }).requestPermission();
-          if (result !== "granted") return;
-        } catch { return; }
-      }
-      window.addEventListener("devicemotion", handleMotion);
-    };
-    requestPermission();
-    return () => window.removeEventListener("devicemotion", handleMotion);
-  }, [shuffleCards]);
+
 
   const handleSaveNote = async () => {
     const validTexts = noteTexts.filter((t) => t.text.trim());

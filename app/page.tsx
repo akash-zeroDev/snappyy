@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { sendGAEvent } from '@next/third-parties/google';
 
 function ConfettiBurst() {
   const pieces = useMemo(() => Array.from({ length: 40 }, (_, i) => {
@@ -435,6 +436,7 @@ export default function Home() {
   };
 
   const handleDownload = () => {
+    sendGAEvent('event', 'download_polaroid', { frame_used: frameColor });
     if (boothPhotos.length > 0) {
       handleStripDownload();
       return;
@@ -1805,7 +1807,10 @@ export default function Home() {
                 {FRAME_COLORS.map((f) => (
                   <button
                     key={f.key}
-                    onClick={() => setFrameColor(f.key)}
+                    onClick={() => {
+                      setFrameColor(f.key);
+                      sendGAEvent('event', 'change_frame_color', { value: f.key });
+                    }}
                     title={f.label}
                     style={{
                       width: frameColor === f.key ? 28 : 22,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
+import { sendGAEvent } from '@next/third-parties/google';
 
 const MOOD_OPTIONS = [
   { emoji: "🤩", label: "Love it!", value: "love" },
@@ -79,6 +80,10 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
 
       if (!response.ok) {
         console.error("Failed to submit feedback");
+      } else {
+        sendGAEvent('event', 'submit_feedback', {
+          feedback_type: 'app_feedback'
+        });
       }
     } catch (err: any) {
       console.error("Unexpected error:", err.message);
