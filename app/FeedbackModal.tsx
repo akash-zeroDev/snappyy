@@ -47,7 +47,16 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
   };
 
   const handleSubmit = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidEmail = emailRegex.test(email.trim());
+
     if (!mood && !message.trim()) {
+      setShakeBtn(true);
+      setTimeout(() => setShakeBtn(false), 600);
+      return;
+    }
+
+    if (!isValidEmail) {
       setShakeBtn(true);
       setTimeout(() => setShakeBtn(false), 600);
       return;
@@ -317,7 +326,7 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
                     fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
                     fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 8,
                   }}>
-                    Your Email (Optional) 📧
+                    Your Email 📧 <span style={{color: "rgba(255,100,100,0.8)"}}>*</span>
                   </p>
                   <input
                     type="email"
@@ -358,7 +367,7 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
                     textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 12,
                     fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
                   }}>
-                    100% anonymous — pinky promise 🤙
+                    Required field. 100% spam-free — pinky promise 🤙
                   </p>
                 </motion.div>
               )}
