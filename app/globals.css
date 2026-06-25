@@ -218,3 +218,26 @@ video {
 .theme-light .ring-card img {
   filter: brightness(0.85) saturate(0.9) contrast(0.95) !important;
 }
+
+/* Pop background overlay responsiveness */
+.pop-bg-image {
+  bottom: -35%;
+}
+
+@media (max-width: 900px) {
+  .pop-bg-image {
+    bottom: -15%;
+  }
+}
+
+@media (max-width: 640px) {
+  .pop-bg-image {
+    bottom: -5%;
+  }
+}
+
+@media (max-width: 380px) {
+  .pop-bg-image {
+    bottom: 0;
+  }
+}

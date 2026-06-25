@@ -20,6 +20,7 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
   const [mood, setMood] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [shakeBtn, setShakeBtn] = useState(false);
 
@@ -36,6 +37,7 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
     setMood(null);
     setSelectedTags(new Set());
     setMessage("");
+    setEmail("");
     setSubmitted(false);
   };
 
@@ -44,7 +46,7 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
     onClose();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!mood && !message.trim()) {
       setShakeBtn(true);
       setTimeout(() => setShakeBtn(false), 600);
@@ -55,18 +57,21 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
       mood: MOOD_OPTIONS.find((m) => m.value === mood)?.label ?? "—",
       tags: [...selectedTags],
       message: message.trim(),
+      email: email.trim(),
       date: new Date().toISOString(),
     };
+
     try {
-      // Send data to Supabase
-      supabase.from("feedback").insert([{
-        mood: entry.mood,
-        tags: entry.tags,
-        message: entry.message
-      }]).then(({ error }) => {
-        if (error) console.error("Supabase insert error:", error);
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
       });
-    } catch (err:any){
+
+      if (!response.ok) {
+        console.error("Failed to submit feedback");
+      }
+    } catch (err: any) {
       console.error("Unexpected error:", err.message);
     }
 
@@ -301,6 +306,30 @@ export default function FeedbackModal({ open, onClose }: { open: boolean; onClos
                       background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13,
                       fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
                       resize: "none", outline: "none", lineHeight: 1.6, boxSizing: "border-box",
+                      marginBottom: 18,
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                  />
+
+                  {/* Email */}
+                  <p style={{
+                    fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
+                    fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 8,
+                  }}>
+                    Your Email (Optional) 📧
+                  </p>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    style={{
+                      width: "100%", padding: "12px 14px", borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13,
+                      fontFamily: "var(--font-patrick-hand), 'Patrick Hand', sans-serif",
+                      outline: "none", boxSizing: "border-box",
                       marginBottom: 18,
                     }}
                     onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
