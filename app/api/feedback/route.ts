@@ -15,13 +15,13 @@ export async function POST(req: Request) {
 
     if (supabaseError) {
       console.error('Supabase error:', supabaseError);
-      return NextResponse.json({ error: 'Failed to store feedback' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to store feedback: ' + supabaseError.message }, { status: 500 });
     }
 
     // 2. Send email via Resend
     const { data, error: resendError } = await resend.emails.send({
       from: 'MemoryPrint Feedback <onboarding@resend.dev>', // Resend testing domain
-      to: ['akashkumar7653011@gmail.com', 'srivastavaalok2214@gmail.com'],
+      to: ['akashkumar7653099@gmail.com'],
       subject: 'New Feedback Received - MemoryPrint',
       html: `
         <h2>New Feedback Submission</h2>
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     if (resendError) {
       console.error('Resend error:', resendError);
-      // We still return success since the DB insert succeeded, but we could handle this differently
+      return NextResponse.json({ error: 'Email failed: ' + resendError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, data });
