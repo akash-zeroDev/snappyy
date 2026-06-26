@@ -189,6 +189,7 @@ video {
 @media (max-width: 380px) {
   .hero-heading { font-size: 32px !important; line-height: 36px !important; }
   .fridge-heading { font-size: 28px !important; line-height: 32px !important; }
+  .hero-cta { margin-top: 110px !important; }
 }
 
 /* ============================================================
@@ -220,24 +221,15 @@ video {
 }
 
 /* Pop background overlay responsiveness */
-.pop-bg-image {
-  bottom: -35%;
+:root {
+  --pop-bottom: -35%;
 }
 
-@media (max-width: 900px) {
+/* Hide on Tablets and Mobile Devices */
+@media (max-width: 1000px) {
   .pop-bg-image {
-    bottom: -15%;
-  }
-}
-
-@media (max-width: 640px) {
-  .pop-bg-image {
-    bottom: -5%;
-  }
-}
-
-@media (max-width: 380px) {
-  .pop-bg-image {
-    bottom: 0;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
 }

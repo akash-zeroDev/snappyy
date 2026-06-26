@@ -758,10 +758,11 @@ export default function Home() {
               src="/pop_bg.png"
               alt=""
               aria-hidden
+              className="pop-bg-image"
               style={{
                 position: "absolute",
                 left: "50%",
-                bottom: "-35%",
+                bottom: "var(--pop-bottom, -35%)",
                 transform: "translateX(-50%)",
                 width: "100vw",
                 maxWidth: "1600px",
