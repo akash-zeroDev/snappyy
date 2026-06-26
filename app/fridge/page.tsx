@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import PaperBackground, { PAPER_PRESETS, type PaperType, type TextureStyle } from "../PaperBackground";
 import ProfileCard from "../ProfileCard";
 import FeedbackModal from "../FeedbackModal";
@@ -67,6 +67,50 @@ const FRAME_SIZES = [
   { key: "wide", label: "Wide", imgRatio: "16 / 9", bottomPct: 10, canvasBottom: 0.10 },
   { key: "square", label: "Square", imgRatio: "1 / 1", bottomPct: 12, canvasBottom: 0.12 },
 ];
+
+function MobileDragWrapper({ children, isMobile, dragProps, style, className, ...props }: any) {
+  const controls = useDragControls();
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  const startDrag = (e: any) => {
+    controls.start(e);
+  };
+
+  const handlePointerDown = (e: any) => {
+    props.onPointerDown?.(e);
+    if (isMobile) {
+      timer.current = setTimeout(() => {
+        startDrag(e);
+      }, 350);
+    }
+  };
+
+  const clearTimer = () => {
+    if (timer.current) clearTimeout(timer.current);
+  };
+
+  const handlePointerUp = (e: any) => {
+    clearTimer();
+    props.onPointerUp?.(e);
+  };
+
+  return (
+    <motion.div
+      {...props}
+      {...dragProps}
+      dragListener={!isMobile}
+      dragControls={controls}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={clearTimer}
+      onPointerLeave={clearTimer}
+      className={className}
+      style={{ ...style, touchAction: "none" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 type CustomFridge = {
   name: string;
@@ -263,10 +307,13 @@ export default function FridgePage() {
     if (typeof window !== "undefined") localStorage.setItem("fridge_preset", String(preset));
   }, [preset]);
 
-  const handleDragEnd = async (m: FridgeMemory, dx: number, dy: number) => {
-    const boardW = containerRef.current?.clientWidth ?? 1200;
-    const newX = Math.max(0, Math.min(m.x + dx, boardW - CARD_W));
-    const newY = Math.max(0, Math.min(m.y + dy, BOARD_HEIGHT - 100));
+  const handleDragEnd = async (m: FridgeMemory, clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const boardW = rect.width;
+    const cardH = CARD_W * 1.35;
+    const newX = Math.max(0, Math.min(clientX - rect.left - (CARD_W / 2), boardW - CARD_W));
+    const newY = Math.max(0, Math.min(clientY - rect.top - (cardH / 2), BOARD_HEIGHT - cardH - 10));
     const updated = { ...m, x: newX, y: newY };
     setMemories((prev) => prev.map((p) => (p.id === m.id ? updated : p)));
     await putMemory(updated);
@@ -1020,6 +1067,7 @@ export default function FridgePage() {
                 position: "relative",
                 width: "100%",
                 height: BOARD_HEIGHT,
+                touchAction: "none",
               }}
             >
               {visibleMemories.length === 0 && (
@@ -1055,12 +1103,12 @@ export default function FridgePage() {
                 const imgRatio = fsKey === "auto" ? undefined : fsCfg?.imgRatio;
                 const bottomPct = fsCfg?.bottomPct ?? 18;
                 return (
-                <motion.div
+                <MobileDragWrapper
                   key={m.id}
+                  isMobile={isMobile}
                   drag
                   dragMomentum={false}
-                  dragElastic={0}
-                  dragConstraints={containerRef}
+                  dragElastic={0.1}
                   initial={{ x: m.x, y: m.y, rotate: m.rotate, opacity: 0, scale: 0.6 }}
                   animate={{ x: m.x, y: m.y, rotate: m.rotate, opacity: 1, scale: 1 }}
                   transition={{ type: "spring", stiffness: 220, damping: 24 }}
@@ -1069,7 +1117,7 @@ export default function FridgePage() {
                   onPointerDown={(e) => {
                     dragStartRef.current = { x: e.clientX, y: e.clientY };
                   }}
-                  onDragEnd={(_, info) => handleDragEnd(m, info.offset.x, info.offset.y)}
+                  onDragEnd={(_, info) => handleDragEnd(m, info.point.x, info.point.y)}
                   onPointerUp={(e) => {
                     const s = dragStartRef.current;
                     if (s && Math.abs(e.clientX - s.x) < 5 && Math.abs(e.clientY - s.y) < 5) {
@@ -1278,7 +1326,7 @@ export default function FridgePage() {
                     </p>
                   </div>
                   )}
-                </motion.div>
+                </MobileDragWrapper>
                 );
               })}
             </div>
@@ -2359,10 +2407,10 @@ export default function FridgePage() {
                     onDragEnd={(_, info) => {
                       if (!noteRef.current) return;
                       const rect = noteRef.current.getBoundingClientRect();
-                      const dx = (info.offset.x / rect.width) * 100;
-                      const dy = (info.offset.y / rect.height) * 100;
+                      const nx = ((info.point.x - rect.left) / rect.width) * 100;
+                      const ny = ((info.point.y - rect.top) / rect.height) * 100;
                       setNoteTexts((prev) =>
-                        prev.map((p) => p.id === t.id ? { ...p, x: Math.max(2, Math.min(98, p.x + dx)), y: Math.max(2, Math.min(98, p.y + dy)) } : p)
+                        prev.map((p) => p.id === t.id ? { ...p, x: Math.max(2, Math.min(98, nx)), y: Math.max(2, Math.min(98, ny)) } : p)
                       );
                     }}
                     style={{
@@ -2427,8 +2475,8 @@ export default function FridgePage() {
                     onDragEnd={(_, info) => {
                       if (!noteRef.current) return;
                       const rect = noteRef.current.getBoundingClientRect();
-                      const newX = s.x + (info.offset.x / rect.width) * 100;
-                      const newY = s.y + (info.offset.y / rect.height) * 100;
+                      const newX = ((info.point.x - rect.left) / rect.width) * 100;
+                      const newY = ((info.point.y - rect.top) / rect.height) * 100;
                       setNoteStickers((prev) =>
                         prev.map((st, j) => j === i ? { ...st, x: Math.max(5, Math.min(95, newX)), y: Math.max(5, Math.min(95, newY)) } : st)
                       );
