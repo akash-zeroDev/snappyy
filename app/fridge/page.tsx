@@ -1057,7 +1057,7 @@ export default function FridgePage() {
                 return (
                 <motion.div
                   key={m.id}
-                  drag={!isMobile}
+                  drag
                   dragMomentum={false}
                   dragElastic={0}
                   dragConstraints={containerRef}

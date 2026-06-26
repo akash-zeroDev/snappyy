@@ -315,8 +315,11 @@ export default function Home() {
     }
     const ox = (vw - sw) / 2;
     const oy = (vh - sh) / 2;
-    canvas.width = Math.round(sw);
-    canvas.height = Math.round(sh);
+    const MAX_W = 1200;
+    const finalW = Math.min(sw, MAX_W);
+    const finalH = finalW / targetAspect;
+    canvas.width = Math.round(finalW);
+    canvas.height = Math.round(finalH);
     const ctx = canvas.getContext("2d")!;
     ctx.save();
     if (facingMode === "user") {
@@ -342,8 +345,11 @@ export default function Home() {
     else { sw = vw; sh = vw / targetAspect; }
     const ox = (vw - sw) / 2;
     const oy = (vh - sh) / 2;
-    canvas.width = Math.round(sw);
-    canvas.height = Math.round(sh);
+    const MAX_W = 1200;
+    const finalW = Math.min(sw, MAX_W);
+    const finalH = finalW / targetAspect;
+    canvas.width = Math.round(finalW);
+    canvas.height = Math.round(finalH);
     const ctx = canvas.getContext("2d")!;
     ctx.save();
     if (facingMode === "user") { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
