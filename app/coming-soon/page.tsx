@@ -85,19 +85,19 @@ export default function ComingSoonPage() {
         minHeight: "100vh",
         background: t.bg,
         color: t.text,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: "var(--font-patrick-hand), 'Patrick Hand', cursive",
         transition: "background 0.3s, color 0.3s",
         overflow: "hidden",
       }}
     >
       {/* Nav */}
       <nav
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: `1px solid ${t.border}`,
+        style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          padding: "16px 24px", 
+          borderBottom: `1px solid ${t.border}`, 
         }}
       >
         <Link

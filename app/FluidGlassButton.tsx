@@ -298,7 +298,7 @@ export default function FluidGlassButton({
           pointerEvents: "none",
           textAlign: "center",
           textShadow: "0px 2px 10px rgba(255,255,255,0.3)",
-          fontFamily: '"Aileron", system-ui, sans-serif',
+          fontFamily: "var(--font-patrick-hand), 'Patrick Hand', cursive",
           fontSize: 16,
           fontWeight: 600,
           letterSpacing: "0.01em",

@@ -427,6 +427,7 @@ export default function Home() {
     if (boothPhotos.length > 0 && !capturedImage) {
       setCapturedImage(boothPhotos[0]);
     }
+    
     setShowFlash(true);
     setStage("printing");
     setTimeout(() => setShowFlash(false), 600);
@@ -555,7 +556,6 @@ export default function Home() {
           WebkitBackdropFilter: lightMode ? "none" : "blur(10px)",
           background: lightMode ? "#f5f0eb" : "rgba(0,0,0,0.35)",
           borderBottom: lightMode ? "none" : "1px solid rgba(255,255,255,0.06)",
-          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         <Link
@@ -914,8 +914,7 @@ export default function Home() {
                   <p
                     className="hero-heading"
                     style={{
-                      fontFamily:
-                        'system-ui, -apple-system, sans-serif',
+                      fontFamily: "var(--font-patrick-hand), 'Patrick Hand', cursive",
                       fontSize: "clamp(32px, 8vw, 51px)",
                       fontWeight: 500,
                       letterSpacing: "-1.5px",
