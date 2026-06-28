@@ -1115,11 +1115,11 @@ export default function FridgePage() {
                       transition={{ type: "spring", stiffness: 220, damping: 24 }}
                       whileHover={{ zIndex: 50 }}
                       whileDrag={{ scale: 1.05, zIndex: 100, cursor: "grabbing" }}
-                      onPointerDown={(e) => {
+                      onPointerDown={(e:any) => {
                         dragStartRef.current = { x: e.clientX, y: e.clientY };
                       }}
-                      onDragEnd={(_, info) => handleDragEnd(m, info.point.x, info.point.y)}
-                      onPointerUp={(e) => {
+                      onDragEnd={(_: any, info:any) => handleDragEnd(m, info.point.x, info.point.y)}
+                      onPointerUp={(e:any) => {
                         const s = dragStartRef.current;
                         if (s && Math.abs(e.clientX - s.x) < 5 && Math.abs(e.clientY - s.y) < 5) {
                           setOpen(m);
